@@ -532,7 +532,6 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">Escritório</div>
     <div class="nav-item" onclick="switchTab('minutas',this)"><i class="ti ti-file-text"></i><span>Minutas</span></div>
-    <div class="nav-item" onclick="switchTab('jurisprudencia',this)"><i class="ti ti-gavel"></i><span>Jurisprudência</span></div>
     <div class="nav-item" onclick="switchTab('agenda',this)"><i class="ti ti-calendar"></i><span>Agenda</span></div>
     <div class="nav-item" onclick="switchTab('financeiro',this)"><i class="ti ti-currency-dollar"></i><span>Financeiro</span></div>
     <div class="nav-item" onclick="switchTab('produtividade',this)"><i class="ti ti-chart-bar"></i><span>Produtividade</span></div>
@@ -910,10 +909,17 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
   <div class="fgr full"><label>Título *</label><input id="fm-titulo"></div>
   <div class="fgr"><label>Categoria</label><select id="fm-cat"><option>Petição inicial</option><option>Contestação</option><option>Recurso</option><option>Contrato</option><option>Procuração</option><option>Acordo</option><option>Notificação</option><option>Outro</option></select></div>
   <div class="fgr"><label>Área</label><select id="fm-area"><option>Trabalhista</option><option>Cível</option><option>Criminal</option><option>Família</option><option>Empresarial</option><option>Previdenciário</option><option>Geral</option></select></div>
-  <div class="fgr full"><label>Conteúdo</label><textarea id="fm-corpo" style="min-height:160px;font-family:monospace;font-size:12px" placeholder="Use {{CLIENTE}}, {{PROCESSO}}, {{DATA}}..."></textarea></div>
+  <div class="fgr full"><label style="display:flex;justify-content:space-between;align-items:center;gap:8px">Conteúdo <button type="button" class="btn bo bs" onclick="jpPickAbrir('fm-corpo')"><i class="ti ti-gavel"></i> Inserir jurisprudência</button></label><textarea id="fm-corpo" style="min-height:160px;font-family:monospace;font-size:12px" placeholder="Use {{CLIENTE}}, {{PROCESSO}}, {{DATA}}..."></textarea></div>
   <div class="fgr full"><label>Obs.</label><input id="fm-obs"></div>
 </div></div>
 <div class="mf"><button class="btn bo" onclick="closeModal('mMinuta')">Cancelar</button><button class="btn bp" onclick="saveMinuta()"><i class="ti ti-check"></i> Salvar</button></div>
+</div></div>
+<div id="mJpPick" class="overlay hidden" onclick="if(event.target.id==='mJpPick')closeModal('mJpPick')">
+<div class="modal" style="max-width:700px"><div class="mh"><h2><i class="ti ti-gavel"></i> Inserir jurisprudência</h2><button class="btn bo bs" onclick="closeModal('mJpPick')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div class="gt-search" style="margin-bottom:8px"><i class="ti ti-search"></i><input id="jpk-q" placeholder="Buscar no banco do escritório…" oninput="renderJpPick()" autocomplete="off"></div>
+<label style="display:flex;gap:6px;align-items:center;font-size:12px;margin-bottom:8px;cursor:pointer"><input type="checkbox" id="jpk-ok" style="width:auto" onchange="renderJpPick()"> Mostrar só os conferidos na fonte</label>
+<div id="jpk-lista" style="max-height:52vh;overflow:auto"></div></div>
+<div class="mf"><button class="btn bo" onclick="closeModal('mJpPick');minutaSub='jp';closeModal('mMinuta');switchTabById('minutas')" style="margin-right:auto"><i class="ti ti-external-link"></i> Abrir Jurisprudência</button><button class="btn bo" onclick="closeModal('mJpPick')">Fechar</button></div>
 </div></div>
 
 <!-- DETAIL PANEL -->
@@ -2124,10 +2130,8 @@ function delAt(id){if(!confirm('Excluir?'))return;atendimentos=atendimentos.filt
 var minutaSub='lib';
 function renderMinutas(){
   var tc=document.getElementById('tab-content');
-  var subnav='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">'+
-    '<button class="btn '+(minutaSub==='lib'?'bg':'bo')+' bs" onclick="switchMinutaSub(\'lib\')"><i class="ti ti-library"></i> Biblioteca de Minutas</button>'+
-    '<button class="btn '+(minutaSub==='word'?'bg':'bo')+' bs" onclick="switchMinutaSub(\'word\')"><i class="ti ti-file-word"></i> Modelos Word (com o seu design)</button>'+
-    '<button class="btn '+(minutaSub==='doc'?'bg':'bo')+' bs" onclick="switchMinutaSub(\'doc\')"><i class="ti ti-file-certificate"></i> Procuração e Contratos</button></div>';
+  if(minutaSub==='jp'){renderJurisp();return}
+  var subnav=minutaSubnavHtml();
   if(minutaSub==='word'){
     tc.innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-file-word"></i></div><h2>Modelos Word</h2></div></div>'+subnav+'<div id="mw-corpo"></div>';
     renderModelosWord();return;
@@ -2142,6 +2146,10 @@ function renderMinutas(){
     '<div id="mn-list"></div>';
   renderMnList();
 }
+function minutaSubnavHtml(){return '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">'+
+    '<button class="btn '+(minutaSub==='lib'?'bg':'bo')+' bs" onclick="switchMinutaSub(\'lib\')"><i class="ti ti-library"></i> Biblioteca de Minutas</button>'+
+    '<button class="btn '+(minutaSub==='word'?'bg':'bo')+' bs" onclick="switchMinutaSub(\'word\')"><i class="ti ti-file-word"></i> Modelos Word (com o seu design)</button>'+
+    '<button class="btn '+(minutaSub==='doc'?'bg':'bo')+' bs" onclick="switchMinutaSub(\'doc\')"><i class="ti ti-file-certificate"></i> Procuração e Contratos</button>'+'<button class="btn '+(minutaSub==='jp'?'bg':'bo')+' bs" onclick="switchMinutaSub(\'jp\')"><i class="ti ti-gavel"></i> Jurisprudência</button></div>'}
 function switchMinutaSub(s){minutaSub=s;renderMinutas()}
 function renderMnList(){
   var q=(document.getElementById('msq').value||'').toLowerCase(),cat=document.getElementById('mfcat').value;
@@ -5710,7 +5718,7 @@ function renderJurisp(){
   var tot=jurisp.length,ok=jurisp.filter(function(j){return j.conferido}).length;
   var tribs={};jurisp.forEach(function(j){var s=siglaTrib(j.trib);if(s)tribs[s]=1});
   var opt=function(v,l,cur){return'<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(l)+'</option>'};
-  tc.innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-gavel"></i></div><h2>Jurisprudência</h2></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bo bs" onclick="jpExcel()"><i class="ti ti-file-spreadsheet"></i> Exportar</button><button class="btn bp" onclick="openJpModal()"><i class="ti ti-plus"></i> Salvar julgado</button></div></div>'+
+  tc.innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-gavel"></i></div><h2>Jurisprudência</h2></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bo bs" onclick="jpExcel()"><i class="ti ti-file-spreadsheet"></i> Exportar</button><button class="btn bp" onclick="openJpModal()"><i class="ti ti-plus"></i> Salvar julgado</button></div></div>'+minutaSubnavHtml()+
     (jpVinc?'<div class="calc-aviso" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><i class="ti ti-link"></i><span style="flex:1">Vinculando ao processo <b>'+esc(jpProcLabel(jpVinc))+'</b>. Sem termo de busca, aparecem só os já vinculados; pesquise para vincular outros.</span><button class="btn bo bs" onclick="openPanel(\''+jpVinc+'\')"><i class="ti ti-folder"></i> Abrir processo</button><button class="btn bo bs" onclick="jpVinc=null;renderJurisp()"><i class="ti ti-x"></i> Sair do modo vínculo</button></div>':'')+
     '<div class="card" style="padding:14px 16px;margin-bottom:14px">'+
       '<div class="gt-search" style="margin-bottom:10px"><i class="ti ti-search"></i><input id="jp-q" value="'+esc(jpF.q)+'" placeholder="Pesquisar: palavras ou &quot;frase exata&quot; — ex.: fraude bancária &quot;súmula 479&quot; dano moral" oninput="jpF.q=this.value;renderJpLista()" onkeydown="if(event.key===\'Enter\')renderJpLista()" autocomplete="off"></div>'+
@@ -5867,7 +5875,7 @@ function saveJp(){
   if(jpEditId){var j=jurisp.filter(function(x){return x.id===jpEditId})[0];if(!j)return;Object.assign(j,o);if(conf&&!j.conferido){j.conferidoEm=todayStr;j.conferidoPor=who}if(!conf){j.conferidoEm='';j.conferidoPor=''}j.conferido=conf;j.editadoEm=new Date().toISOString()}
   else{o.id=uid();o.conferido=conf;o.conferidoEm=conf?todayStr:'';o.conferidoPor=conf?who:'';o.criadoEm=new Date().toISOString();o.criadoPor=who;jurisp.unshift(o)}
   saveAll();closeModal('mJp');
-  if(currentTab==='jurisprudencia')renderJurisp();
+  if(document.getElementById('jp-lista'))renderJurisp();if(document.getElementById('jpk-lista'))renderJpPick();
   var dp=document.getElementById('detPanel');if(dp&&dp.classList.contains('open')&&dp.dataset.id)openPanel(dp.dataset.id);
   toast(conf?'Julgado salvo.':'Julgado salvo como "a conferir".','ok');
 }
@@ -5886,7 +5894,36 @@ function jpPainelHtml(pid){
     '<button class="btn bo bs" style="width:100%;justify-content:center;margin-top:6px" onclick="jpAbrirDoProc(\''+pid+'\')"><i class="ti ti-gavel"></i> '+(l.length?'Ver / vincular jurisprudência':'Pesquisar e vincular jurisprudência')+'</button></div>';
 }
 
-var tabRender={kanban:renderKanban,dashboard:renderDashboard,processos:renderProcessos,clientes:renderClientes,tarefas:renderTarefas,prazos:renderPrazos,intimacoes:renderIntimacoes,atendimentos:renderAtendimentos,horas:renderHoras,minutas:renderMinutas,jurisprudencia:renderJurisp,agenda:renderAgenda,financeiro:renderFinanceiro,produtividade:renderProdutividade,relatorios:renderRelatorios,assinaturas:renderAssinaturas,calculos:renderCalculos,portais:renderPortais,historico:renderHistorico,config:renderConfig};
+// ---------- inserir jurisprudência no texto de uma minuta ----------
+var jpPickAlvo=null,jpPickPos=null;
+function jpPickAbrir(alvo){
+  jpPickAlvo=alvo;var t=document.getElementById(alvo);jpPickPos=t?[t.selectionStart,t.selectionEnd]:null;
+  document.getElementById('jpk-q').value='';openModal('mJpPick');renderJpPick();setTimeout(function(){document.getElementById('jpk-q').focus()},60);
+}
+function renderJpPick(){
+  var box=document.getElementById('jpk-lista');if(!box)return;
+  var tt=jpTermos(document.getElementById('jpk-q').value),so=document.getElementById('jpk-ok').checked;
+  var l=jurisp.filter(function(j){if(so&&!j.conferido)return false;var h=jpNorm(jpTexto(j));return tt.every(function(t){return h.indexOf(t)>-1})});
+  l.sort(function(a,b){return(b.conferido?1:0)-(a.conferido?1:0)||String(b.dataJulg||b.criadoEm||'').localeCompare(String(a.dataJulg||a.criadoEm||''))});
+  if(!jurisp.length){box.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3)">O banco de jurisprudência está vazio. Salve julgados em Minutas › Jurisprudência.</div>';return}
+  if(!l.length){box.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3)">Nada encontrado.</div>';return}
+  box.innerHTML=l.slice(0,60).map(function(j){var pos=JP_POS[j.pos||'neutro']||JP_POS.neutro;
+    return'<div class="jp-card card" style="border-left:4px solid '+pos[1]+';margin-bottom:8px;padding:10px 12px"><div class="jp-top"><div style="flex:1;min-width:0"><div class="jp-cab">'+jpMarcar(esc([siglaTrib(j.trib),jpIdent(j)].filter(Boolean).join(' · ')),tt)+'</div>'+(j.tema?'<div class="jp-tema" style="font-size:12px">'+jpMarcar(esc(j.tema),tt)+'</div>':'')+'</div><div class="jp-selos">'+(j.conferido?'<span class="jp-selo ok"><i class="ti ti-circle-check"></i> Conferido</span>':'<span class="jp-selo pend"><i class="ti ti-alert-triangle"></i> A conferir</span>')+'</div></div>'+
+      '<div class="jp-em" style="margin-top:5px">'+jpMarcar(esc(jpTrecho(j.ementa||'',tt,260)),tt)+'</div>'+
+      '<div class="jp-acoes" style="justify-content:flex-end;margin-top:7px"><button class="btn bp bs" onclick="jpInserir(\''+j.id+'\',\'ementa\')"><i class="ti ti-text-plus"></i> Ementa + citação</button>'+(j.trecho?'<button class="btn bo bs" onclick="jpInserir(\''+j.id+'\',\'trecho\')">Trecho + citação</button>':'')+'<button class="btn bo bs" onclick="jpInserir(\''+j.id+'\',\'cit\')">Só a citação</button></div></div>'}).join('');
+}
+function jpInserir(id,modo){
+  var j=jurisp.filter(function(x){return x.id===id})[0],t=document.getElementById(jpPickAlvo);if(!j||!t)return;
+  if(!j.conferido&&!confirm('Este julgado ainda está "A CONFERIR" (não foi conferido na fonte oficial).\n\nAntes de usar em peça, confira número, relator, datas e ementa no site do tribunal.\n\nInserir mesmo assim?'))return;
+  var cit=jpCitacao(j),txt=modo==='cit'?cit:'"'+String((modo==='trecho'?j.trecho:j.ementa)||j.ementa||'').trim()+'"\n'+cit;
+  var v=t.value,a=jpPickPos?jpPickPos[0]:v.length,b=jpPickPos?jpPickPos[1]:v.length;
+  var antes=v.slice(0,a),depois=v.slice(b),pre=modo==='cit'||!antes||/\n\n$/.test(antes)?'':(/\n$/.test(antes)?'\n':'\n\n'),pos=modo==='cit'||!depois||/^\n/.test(depois)?'':'\n\n';
+  t.value=antes+pre+txt+pos+depois;var c=(antes+pre+txt).length;jpPickPos=[c,c];
+  closeModal('mJpPick');t.focus();try{t.setSelectionRange(c,c)}catch(e){}
+  toast('Jurisprudência inserida na minuta.','ok');
+}
+
+var tabRender={kanban:renderKanban,dashboard:renderDashboard,processos:renderProcessos,clientes:renderClientes,tarefas:renderTarefas,prazos:renderPrazos,intimacoes:renderIntimacoes,atendimentos:renderAtendimentos,horas:renderHoras,minutas:renderMinutas,jurisprudencia:function(){minutaSub='jp';switchTabById('minutas')},agenda:renderAgenda,financeiro:renderFinanceiro,produtividade:renderProdutividade,relatorios:renderRelatorios,assinaturas:renderAssinaturas,calculos:renderCalculos,portais:renderPortais,historico:renderHistorico,config:renderConfig};
 function switchTab(tab,el){
   currentTab=tab;
   document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active')});
@@ -5895,7 +5932,7 @@ function switchTab(tab,el){
 }
 function switchTabById(tab){
   var items=document.querySelectorAll('.nav-item');
-  var tabNames=['dashboard','processos','clientes','tarefas','kanban','prazos','intimacoes','atendimentos','horas','minutas','jurisprudencia','agenda','financeiro','produtividade','relatorios','assinaturas','calculos','portais','historico','config'];
+  var tabNames=['dashboard','processos','clientes','tarefas','kanban','prazos','intimacoes','atendimentos','horas','minutas','agenda','financeiro','produtividade','relatorios','assinaturas','calculos','portais','historico','config'];
   var idx=tabNames.indexOf(tab);
   if(idx>=0&&items[idx])switchTab(tab,items[idx]);
   else if(tabRender[tab]){currentTab=tab;tabRender[tab]();}
