@@ -914,6 +914,11 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 </div></div>
 <div class="mf"><button class="btn bo" onclick="closeModal('mMinuta')">Cancelar</button><button class="btn bp" onclick="saveMinuta()"><i class="ti ti-check"></i> Salvar</button></div>
 </div></div>
+<div id="mJpImp" class="overlay hidden" onclick="if(event.target.id==='mJpImp')closeModal('mJpImp')">
+<div class="modal" style="max-width:720px"><div class="mh"><h2><i class="ti ti-file-import"></i> Julgados já usados nas minutas</h2><button class="btn bo bs" onclick="closeModal('mJpImp')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div id="jpi-info" style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px"></div><div id="jpi-lista" style="max-height:56vh;overflow:auto"></div></div>
+<div class="mf"><button class="btn bo" onclick="closeModal('mJpImp')">Cancelar</button><button class="btn bp" id="jpi-ok" onclick="jpImpConfirmar()"><i class="ti ti-check"></i> Importar selecionados</button></div>
+</div></div>
 <div id="mJpPick" class="overlay hidden" onclick="if(event.target.id==='mJpPick')closeModal('mJpPick')">
 <div class="modal" style="max-width:700px"><div class="mh"><h2><i class="ti ti-gavel"></i> Inserir jurisprudência</h2><button class="btn bo bs" onclick="closeModal('mJpPick')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
 <div class="mb"><div class="gt-search" style="margin-bottom:8px"><i class="ti ti-search"></i><input id="jpk-q" placeholder="Buscar no banco do escritório…" oninput="renderJpPick()" autocomplete="off"></div>
@@ -2178,7 +2183,7 @@ function usarMinuta(id){
   toast('Minuta aberta para edição!','ok');
 }
 function openMinutaModal(id){editIds.mn=id||null;var m=id?minutas.filter(function(x){return x.id===id})[0]:{};document.getElementById('mMinutaT').textContent=id?'Editar':'Nova minuta';document.getElementById('fm-titulo').value=m.titulo||'';document.getElementById('fm-cat').value=m.cat||'Petição inicial';document.getElementById('fm-area').value=m.area||'Trabalhista';document.getElementById('fm-corpo').value=m.corpo||'';document.getElementById('fm-obs').value=m.obs||'';openModal('mMinuta')}
-function saveMinuta(){var titulo=document.getElementById('fm-titulo').value.trim(),corpo=document.getElementById('fm-corpo').value.trim();if(!titulo||!corpo){alert('Título e corpo obrigatórios.');return}var o={id:editIds.mn||uid(),titulo:titulo,cat:document.getElementById('fm-cat').value,area:document.getElementById('fm-area').value,corpo:corpo,obs:document.getElementById('fm-obs').value.trim()};if(editIds.mn){var i=minutas.findIndex(function(x){return x.id===editIds.mn});minutas[i]=o}else minutas.unshift(o);saveAll();closeModal('mMinuta');renderMinutas();toast('Minuta salva!','ok')}
+function saveMinuta(){var titulo=document.getElementById('fm-titulo').value.trim(),corpo=document.getElementById('fm-corpo').value.trim();if(!titulo||!corpo){alert('Título e corpo obrigatórios.');return}var o={id:editIds.mn||uid(),titulo:titulo,cat:document.getElementById('fm-cat').value,area:document.getElementById('fm-area').value,corpo:corpo,obs:document.getElementById('fm-obs').value.trim()};if(editIds.mn){var i=minutas.findIndex(function(x){return x.id===editIds.mn});minutas[i]=o}else minutas.unshift(o);saveAll();closeModal('mMinuta');renderMinutas();toast('Minuta salva!','ok');try{jpAposSalvarMinuta(o)}catch(e){}}
 function delMn(id){if(!confirm('Excluir?'))return;minutas=minutas.filter(function(x){return x.id!==id});saveAll();renderMinutas()}
 
 // GERADOR DE PROCURAÇÃO E CONTRATOS (modelo padrão Guerra & Torres)
@@ -5587,6 +5592,7 @@ function jpFiltrar(){
     if(jpF.pos&&(j.pos||'neutro')!==jpF.pos)return false;
     if(jpF.sit==='ok'&&!j.conferido)return false;
     if(jpF.sit==='pend'&&j.conferido)return false;
+    if(jpF.sit==='usado'&&!(j.usos||[]).length)return false;
     if(jpF.tag&&(j.tags||[]).indexOf(jpF.tag)<0)return false;
     if(!tt.length)return true;
     var h=jpNorm(jpTexto(j));return tt.every(function(t){return h.indexOf(t)>-1});
@@ -5594,7 +5600,8 @@ function jpFiltrar(){
   if(tt.length){
     l.forEach(function(j){var forte=jpNorm([j.tema,(j.tags||[]).join(' '),j.trecho].join(' ')),h=jpNorm(jpTexto(j)),s=0;tt.forEach(function(t){s+=h.split(t).length-1;s+=3*(forte.split(t).length-1)});j._sc=s});
     l.sort(function(a,b){return b._sc-a._sc||String(b.dataJulg||'').localeCompare(String(a.dataJulg||''))});
-  }else l.sort(function(a,b){return String(b.criadoEm||'').localeCompare(String(a.criadoEm||''))});
+  }else if(jpF.sit==='usado')l.sort(function(a,b){return(b.usos||[]).length-(a.usos||[]).length});
+  else l.sort(function(a,b){return String(b.criadoEm||'').localeCompare(String(a.criadoEm||''))});
   return l;
 }
 // destaca os termos (sem diferenciar acentos) em texto já escapado
@@ -5632,6 +5639,7 @@ function jpCopiar(id,modo){
   if(modo==='ementa')t='"'+String(j.ementa||'').trim()+'"\n'+cit;
   if(modo==='trecho')t='"'+String(j.trecho||j.ementa||'').trim()+'"\n'+cit;
   copiarTexto(t);
+  jpRegistrarUso(j,'copia','Copiado para peça');saveAll();if(document.getElementById('jp-lista'))renderJpLista();
 }
 function jpConferir(id){
   var j=jurisp.filter(function(x){return x.id===id})[0];if(!j)return;
@@ -5718,7 +5726,8 @@ function renderJurisp(){
   var tot=jurisp.length,ok=jurisp.filter(function(j){return j.conferido}).length;
   var tribs={};jurisp.forEach(function(j){var s=siglaTrib(j.trib);if(s)tribs[s]=1});
   var opt=function(v,l,cur){return'<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(l)+'</option>'};
-  tc.innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-gavel"></i></div><h2>Jurisprudência</h2></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bo bs" onclick="jpExcel()"><i class="ti ti-file-spreadsheet"></i> Exportar</button><button class="btn bp" onclick="openJpModal()"><i class="ti ti-plus"></i> Salvar julgado</button></div></div>'+minutaSubnavHtml()+
+  tc.innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-gavel"></i></div><h2>Jurisprudência</h2></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bo bs" onclick="jpImpAbrir()" title="Procura nas minutas os julgados que vocês já citaram"><i class="ti ti-file-import"></i> Buscar nas minutas</button><button class="btn bo bs" onclick="jpExcel()"><i class="ti ti-file-spreadsheet"></i> Exportar</button><button class="btn bp" onclick="openJpModal()"><i class="ti ti-plus"></i> Salvar julgado</button></div></div>'+minutaSubnavHtml()+
+    (function(){var n=jpImpCandidatos().novos.length;return n?'<div class="calc-aviso" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><i class="ti ti-file-import"></i><span style="flex:1"><b>'+n+'</b> julgado(s) citado(s) nas suas minutas ainda não está(ão) no banco.</span><button class="btn bp bs" onclick="jpImpAbrir()"><i class="ti ti-file-import"></i> Revisar e importar</button></div>':''})()+
     (jpVinc?'<div class="calc-aviso" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><i class="ti ti-link"></i><span style="flex:1">Vinculando ao processo <b>'+esc(jpProcLabel(jpVinc))+'</b>. Sem termo de busca, aparecem só os já vinculados; pesquise para vincular outros.</span><button class="btn bo bs" onclick="openPanel(\''+jpVinc+'\')"><i class="ti ti-folder"></i> Abrir processo</button><button class="btn bo bs" onclick="jpVinc=null;renderJurisp()"><i class="ti ti-x"></i> Sair do modo vínculo</button></div>':'')+
     '<div class="card" style="padding:14px 16px;margin-bottom:14px">'+
       '<div class="gt-search" style="margin-bottom:10px"><i class="ti ti-search"></i><input id="jp-q" value="'+esc(jpF.q)+'" placeholder="Pesquisar: palavras ou &quot;frase exata&quot; — ex.: fraude bancária &quot;súmula 479&quot; dano moral" oninput="jpF.q=this.value;renderJpLista()" onkeydown="if(event.key===\'Enter\')renderJpLista()" autocomplete="off"></div>'+
@@ -5730,7 +5739,7 @@ function renderJurisp(){
       '<select class="gt-select" onchange="jpF.area=this.value;renderJurisp()">'+opt('','Todas as áreas',jpF.area)+JP_AREAS.map(function(a){return opt(a,a,jpF.area)}).join('')+'</select>'+
       '<select class="gt-select" onchange="jpF.tipo=this.value;renderJpLista()">'+opt('','Todos os tipos',jpF.tipo)+JP_TIPOS.map(function(a){return opt(a,a,jpF.tipo)}).join('')+'</select>'+
       '<select class="gt-select" onchange="jpF.pos=this.value;renderJpLista()">'+opt('','A favor e contra',jpF.pos)+Object.keys(JP_POS).map(function(k){return opt(k,JP_POS[k][0],jpF.pos)}).join('')+'</select>'+
-      '<select class="gt-select" onchange="jpF.sit=this.value;renderJpLista()">'+opt('','Conferidos e a conferir',jpF.sit)+opt('ok','Só conferidos na fonte',jpF.sit)+opt('pend','Só a conferir',jpF.sit)+'</select>'+
+      '<select class="gt-select" onchange="jpF.sit=this.value;renderJpLista()">'+opt('','Conferidos e a conferir',jpF.sit)+opt('ok','Só conferidos na fonte',jpF.sit)+opt('pend','Só a conferir',jpF.sit)+opt('usado','Já usados (minutas/peças)',jpF.sit)+'</select>'+
       '<select class="gt-select" id="jp-tag" onchange="jpF.tag=this.value;renderJpLista()">'+opt('','Todas as etiquetas',jpF.tag)+jpTags().map(function(t){return opt(t,t,jpF.tag)}).join('')+'</select>'+
     '</div>'+
     '<div id="jp-res" style="font-size:12px;color:var(--text3);margin:4px 2px 10px"></div><div id="jp-lista"></div>';
@@ -5749,7 +5758,7 @@ function renderJpLista(){
     var meta=[j.relator?(/^rel/i.test(j.relator)?j.relator:'Rel. '+j.relator):'',j.orgao,j.dataJulg?'Julg. '+fmt(j.dataJulg):'',j.dataPub?((j.veic||'Publ.')+' '+fmt(j.dataPub)):''].filter(Boolean).join(' · ');
     var em=String(j.ementa||''),tr=jpTrecho(em,tt);
     return'<div class="card jp-card" style="border-left:4px solid '+pos[1]+'">'+
-      '<div class="jp-top"><div style="flex:1;min-width:0"><div class="jp-cab">'+jpMarcar(esc(cab),tt)+'</div>'+(j.tema?'<div class="jp-tema">'+jpMarcar(esc(j.tema),tt)+'</div>':'')+(meta?'<div class="jp-meta">'+jpMarcar(esc(meta),tt)+'</div>':'')+'</div>'+
+      '<div class="jp-top"><div style="flex:1;min-width:0"><div class="jp-cab">'+jpMarcar(esc(cab),tt)+'</div>'+(j.tema?'<div class="jp-tema">'+jpMarcar(esc(j.tema),tt)+'</div>':'')+(meta?'<div class="jp-meta">'+jpMarcar(esc(meta),tt)+'</div>':'')+((j.usos||[]).length?'<div class="jp-meta" style="color:var(--gold4)" title="'+esc((j.usos||[]).slice(-10).reverse().map(function(u){return fmt(String(u.em).slice(0,10))+' — '+(u.ref||u.onde)}).join('\n'))+'"><i class="ti ti-history"></i> '+esc(jpUsoTxt(j))+'</div>':'')+'</div>'+
         '<div class="jp-selos"><span class="jp-selo" style="color:'+pos[1]+';border-color:'+pos[1]+'"><i class="ti '+pos[2]+'"></i> '+pos[0]+'</span>'+
         (j.conferido?'<span class="jp-selo ok" title="Conferido em '+fmt(j.conferidoEm)+(j.conferidoPor?' por '+esc(j.conferidoPor):'')+'"><i class="ti ti-circle-check"></i> Conferido '+fmt(j.conferidoEm).slice(0,5)+'</span>':'<span class="jp-selo pend" title="Conferir na fonte oficial antes de citar"><i class="ti ti-alert-triangle"></i> A conferir</span>')+'</div></div>'+
       (j.trecho?'<div class="jp-trecho"><i class="ti ti-quote"></i> '+jpMarcar(esc(j.trecho),tt)+'</div>':'')+
@@ -5794,7 +5803,7 @@ function jpInterpretar(txt){
     for(var i=0;i<R.length;i++){m=u.match(R[i][0]);if(m){o.trib=R[i][1]==='TRT'||R[i][1]==='TRF'?R[i][1]+(+m[1]):R[i][1]==='TJ'?(_UF_NOME[m[1]]?'TJ'+m[1]:''):R[i][1];if(o.trib)break}}
   }
   // relator
-  m=t.match(/Relator(?:\(a\)|a)?(?:\s+para\s+o\s+ac[óo]rd[ãa]o)?\s*[:\-–]?\s*((?:Min(?:istr[oa])?\.?|Des(?:embargador(?:a)?(?:\s+Federal)?)?(?:\(a\))?\.?|Ju[ií]z(?:a)?(?:\s+Convocad[oa])?|Juiz Federal|Conselheir[oa])?\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n,;()|]{3,80}?)(?=\s*(?:\n|,|;|\(|\||[ÓO]rg[ãa]o|Data|Julgado|Julgamento|Turma|C[âa]mara|Se[çc][ãa]o|$))/i);
+  m=t.match(/(?:Relator(?:\(a\)|a)?|\bRel\.)(?:\s+para\s+o\s+ac[óo]rd[ãa]o)?\s*[:\-–]?\s*((?:Min(?:istr[oa])?\.?|Des(?:embargador(?:a)?(?:\s+Federal)?)?(?:\(a\))?\.?|Ju[ií]z(?:a)?(?:\s+Convocad[oa])?|Juiz Federal|Conselheir[oa])?\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n,;()|]{3,80}?)(?=\s*(?:\n|,|;|\(|\||[ÓO]rg[ãa]o|Data|Julgado|Julgamento|Turma|C[âa]mara|Se[çc][ãa]o|$))/i);
   if(m)o.relator=jpRelNorm(m[1]);
   // órgão julgador
   m=t.match(/[ÓO]rg[ãa]o\s+[Jj]ulgador\s*[:\-–]?\s*([^\n|;]+)/);
@@ -5882,7 +5891,7 @@ function saveJp(){
 function delJpModal(){if(!jpEditId)return;var id=jpEditId;closeModal('mJp');jpExcluir(id)}
 function jpExcel(){
   var l=jpFiltrar();if(!l.length){toast('Nada para exportar.','warn');return}
-  var rows=[['Tribunal','Tipo','Classe','Número','Relator','Órgão julgador','Julgamento','Publicação','Área','Posição','Tema','Ementa','Trecho','Etiquetas','Processos vinculados','Situação','Link','Citação']].concat(l.map(function(j){return[siglaTrib(j.trib),j.tipo,j.classe,j.numero,j.relator,j.orgao,j.dataJulg?fmt(j.dataJulg):'',j.dataPub?((j.veic?j.veic+' ':'')+fmt(j.dataPub)):'',j.area,(JP_POS[j.pos||'neutro']||JP_POS.neutro)[0],j.tema,j.ementa,j.trecho,(j.tags||[]).join(', '),(j.procIds||[]).map(jpProcLabel).join('; '),j.conferido?'Conferido '+fmt(j.conferidoEm):'A conferir',j.link,jpCitacao(j)]}));
+  var rows=[['Tribunal','Tipo','Classe','Número','Relator','Órgão julgador','Julgamento','Publicação','Área','Posição','Tema','Ementa','Trecho','Etiquetas','Processos vinculados','Situação','Uso','Link','Citação']].concat(l.map(function(j){return[siglaTrib(j.trib),j.tipo,j.classe,j.numero,j.relator,j.orgao,j.dataJulg?fmt(j.dataJulg):'',j.dataPub?((j.veic?j.veic+' ':'')+fmt(j.dataPub)):'',j.area,(JP_POS[j.pos||'neutro']||JP_POS.neutro)[0],j.tema,j.ementa,j.trecho,(j.tags||[]).join(', '),(j.procIds||[]).map(jpProcLabel).join('; '),j.conferido?'Conferido '+fmt(j.conferidoEm):'A conferir',jpUsoTxt(j),j.link,jpCitacao(j)]}));
   relCarregarXLSX().then(function(){var wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[8,14,12,24,26,22,11,14,12,10,40,80,40,20,30,14,30,50].map(function(w){return{wch:w}});XLSX.utils.book_append_sheet(wb,ws,'Jurisprudência');XLSX.writeFile(wb,'jurisprudencia_'+todayStr+'.xlsx');toast('Planilha gerada.','ok')})
   .catch(function(){var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c==null?'':c).replace(/"/g,'""')+'"'}).join(';')}).join('\r\n');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='jurisprudencia_'+todayStr+'.csv';document.body.appendChild(a);a.click();a.remove();toast('Sem internet para o Excel: gerado CSV.','warn')});
 }
@@ -5921,6 +5930,128 @@ function jpInserir(id,modo){
   t.value=antes+pre+txt+pos+depois;var c=(antes+pre+txt).length;jpPickPos=[c,c];
   closeModal('mJpPick');t.focus();try{t.setSelectionRange(c,c)}catch(e){}
   toast('Jurisprudência inserida na minuta.','ok');
+}
+
+// ---------- julgados já usados: importar das minutas e registrar uso ----------
+var JP_CLASSE_TRIB={REsp:'STJ',AREsp:'STJ',EREsp:'STJ',RMS:'STJ',RE:'STF',ARE:'STF',ADI:'STF',ADC:'STF',ADPF:'STF',ADO:'STF',RR:'TST',AIRR:'TST'};
+function jpChave(j){
+  var t=siglaTrib(j.trib||'').toUpperCase(),n=soDigitos(j.numero);
+  if(/s[úu]mula/i.test(j.tipo||''))return t+'|S'+(j.tipo==='Súmula vinculante'?'V':'')+n;
+  return n?t+'|'+n:'';
+}
+function jpTribContexto(s){
+  var u=jpNorm(s);
+  if(/superior tribunal de justica|\bstj\b/.test(u))return'STJ';
+  if(/supremo tribunal federal|\bstf\b|vinculante/.test(u))return'STF';
+  if(/tribunal superior do trabalho|\btst\b/.test(u))return'TST';
+  if(/\btnu\b|turma nacional de uniformizacao/.test(u))return'TNU';
+  return'';
+}
+function jpAspasAntes(txt,pos){
+  var a=txt.slice(Math.max(0,pos-6000),pos).replace(/\s+$/,'');
+  var fim=a.slice(-1);if(fim!=='"'&&fim!=='”')return'';
+  var ab=fim==='”'?a.lastIndexOf('“',a.length-2):a.lastIndexOf('"',a.length-2);if(ab<0)return'';
+  var q=a.slice(ab+1,a.length-1).trim();
+  return q.length>=30?q.replace(/^EMENTA\s*[:\-–.]?\s*/i,''):'';
+}
+function jpAspasDepois(txt,pos){
+  var m=txt.slice(pos,pos+5000).match(/^\s*[:\-–.]?\s*["“]([\s\S]{20,4000}?)["”]/);return m?m[1].trim():'';
+}
+// devolve os julgados citados num texto (sem repetir)
+function jpExtrairDeTexto(txt){
+  txt=String(txt||'');var achados={},ord=[];
+  function add(o){
+    if(!o||!o.trib)return;var k=jpChave(o);if(!k)return;
+    if(achados[k]){var e=achados[k];Object.keys(o).forEach(function(c){if(o[c]&&!e[c])e[c]=o[c]});if(o.ementa&&(!e.ementa||o.ementa.length>e.ementa.length))e.ementa=o.ementa;return}
+    achados[k]=o;ord.push(k);
+  }
+  // 1) citações entre parênteses: (TJ-GO 5248087-30..., Relator: ..., Data de Publicação: ...)
+  var re=/\(([^()]{12,450}(?:\([^()]{0,40}\)[^()]{0,200})*)\)/g,m;
+  while((m=re.exec(txt))){
+    var dentro=m[1];if(!/\b(STJ|STF|TST|TNU|TRT[\s-]*\d{1,2}|TRF[\s-]*\d|TJ[\s-]*[A-Z]{2}|Tribunal)\b/i.test(dentro)||!/\d{3}/.test(dentro))continue;
+    var em=jpAspasAntes(txt,m.index);
+    var o=jpInterpretar(dentro+(em?'\nEMENTA: '+em:''));
+    if(!em){delete o.ementa;delete o.tema}
+    if(!o.classe&&/\bAC\s*[:\-–]/.test(dentro))o.classe='Apelação Cível';
+    var cb=String(o.classe||'').split(' ').pop();if(JP_CLASSE_TRIB[cb]&&soDigitos(o.numero).length!==20)o.trib=JP_CLASSE_TRIB[cb];
+    if(!o.numero)continue;
+    add(o);
+  }
+  // 2) súmulas mencionadas no texto
+  var rs=/S[úu]mula\s+(Vinculante\s+)?(?:n[º°o.]?\s*)?(\d{1,4})(?:\s*(?:do|da|\/|-)\s*(?:E\.\s*|C\.\s*|Egr[ée]gio\s+)?(STJ|STF|TST|TNU|TJ[A-Z]{2}|TRT\s?\d{1,2}))?/gi;
+  while((m=rs.exec(txt))){
+    var trib=m[3]?m[3].toUpperCase().replace(/\s/g,''):(m[1]?'STF':jpTribContexto(txt.slice(Math.max(0,m.index-170),m.index+m[0].length+50)));
+    if(!trib)continue;
+    add({trib:trib,tipo:m[1]?'Súmula vinculante':'Súmula',numero:m[2],ementa:jpAspasDepois(txt,m.index+m[0].length)});
+  }
+  // 3) números de recursos dos tribunais superiores citados no texto (REsp 1.846.649/MA)
+  var rr=/\b((?:(?:AgInt|AgRg|EDcl)\s+n[oa]s?\s+)*)(REsp|AREsp|EREsp|RMS|RE|ARE|ADI|ADC|ADPF|ADO|RR|AIRR)\s*(?:n[º°o.]?\s*)?(\d{1,3}(?:\.\d{3})+(?:\s*[\/-]\s*[A-Z]{2}\b)?)/g;
+  while((m=rr.exec(txt))){
+    var ctx=txt.slice(m.index+m[0].length,m.index+m[0].length+220),rel=ctx.match(/relatoria\s+d[oa]\s+((?:Min(?:istr[oa])?\.?|Des(?:embargador(?:a)?)?\.?)\s+[A-ZÀ-Ý][^,;.()\n]{3,60})/i);
+    add({trib:JP_CLASSE_TRIB[m[2]],tipo:'Acórdão',classe:(m[1]+m[2]).replace(/\s+/g,' ').trim(),numero:m[3].replace(/\s*-\s*([A-Z]{2})$/,'/$1').replace(/\s+/g,''),relator:rel?jpRelNorm(rel[1].replace(/\s+(definiu|fixou|firmou|decidiu|entendeu)\b.*$/i,'')):''});
+  }
+  return ord.map(function(k){var o=achados[k];o._k=k;return o});
+}
+function jpRegistrarUso(j,onde,ref,mnId){
+  j.usos=(j.usos||[]).slice();
+  if(mnId&&j.usos.some(function(u){return u.mnId===mnId}))return false;
+  j.usos.push({em:new Date().toISOString(),onde:onde,ref:ref||'',mnId:mnId||'',por:sbUser?sbUser.email:''});
+  if(j.usos.length>40)j.usos=j.usos.slice(-40);return true;
+}
+function jpUsoTxt(j){
+  var u=j.usos||[];if(!u.length)return'';
+  var mn={};u.forEach(function(x){if(x.mnId)mn[x.mnId]=1});var nm=Object.keys(mn).length,ult=u[u.length-1];
+  return'Usado '+u.length+'×'+(nm?' · '+nm+' minuta(s)':'')+' · último '+fmt(String(ult.em).slice(0,10));
+}
+// candidatos de todas as minutas (ou de uma) ainda fora do banco
+function jpImpCandidatos(mnId){
+  var banco={};jurisp.forEach(function(j){var k=jpChave(j);if(k)banco[k]=j});
+  var ign=(cfg.jpIgnorados||[]),novos={},ordem=[],existentes=[];
+  minutas.forEach(function(mn){
+    if(mnId&&mn.id!==mnId)return;
+    jpExtrairDeTexto(mn.corpo).forEach(function(o){
+      if(banco[o._k]){existentes.push({j:banco[o._k],mn:mn});return}
+      if(!mnId&&ign.indexOf(o._k)>-1)return;
+      if(novos[o._k]){novos[o._k].mns.push(mn);if(o.ementa&&!novos[o._k].o.ementa)novos[o._k].o.ementa=o.ementa;return}
+      novos[o._k]={o:o,mns:[mn]};ordem.push(o._k);
+    });
+  });
+  return{novos:ordem.map(function(k){return novos[k]}),existentes:existentes};
+}
+var jpImpLista=[],jpImpExist=[];
+function jpImpAbrir(mnId){
+  var c=jpImpCandidatos(mnId);jpImpLista=c.novos;jpImpExist=c.existentes;
+  var box=document.getElementById('jpi-lista');
+  document.getElementById('jpi-info').innerHTML=jpImpLista.length?'Encontrei <b>'+jpImpLista.length+'</b> julgado(s) citado(s) '+(mnId?'nesta minuta':'nas suas minutas')+' que ainda não estão no banco. Marque os que devem entrar. Eles entram como <b>“A conferir”</b>, ligados à minuta onde aparecem.':'Nenhum julgado novo encontrado '+(mnId?'nesta minuta':'nas minutas')+'.';
+  box.innerHTML=jpImpLista.map(function(x,i){var o=x.o;
+    return'<label class="jp-card card" style="display:flex;gap:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;align-items:flex-start"><input type="checkbox" class="jpi-ck" data-i="'+i+'" checked style="width:auto;margin-top:3px"><div style="flex:1;min-width:0"><div class="jp-cab">'+esc([siglaTrib(o.trib),jpIdent(o)].filter(Boolean).join(' · '))+'</div>'+
+      '<div class="jp-meta">'+esc([o.relator?'Rel. '+o.relator:'',o.orgao,o.dataPub?'Publ. '+fmt(o.dataPub):''].filter(Boolean).join(' · '))+'</div>'+
+      (o.ementa?'<div class="jp-em" style="margin-top:4px">'+esc(jpTrecho(o.ementa,[],220))+'</div>':'<div class="jp-meta" style="color:#b45309">Só a referência (sem ementa no texto). Complete depois.</div>')+
+      '<div class="jp-meta" style="margin-top:4px"><i class="ti ti-file-text"></i> '+esc(x.mns.map(function(m){return m.titulo}).join(' · '))+'</div></div></label>'}).join('')+
+    (jpImpExist.length?'<div style="font-size:11px;color:var(--text3);margin-top:6px"><i class="ti ti-info-circle"></i> '+jpImpExist.length+' citação(ões) já estão no banco; a minuta será registrada como uso desses julgados.</div>':'');
+  document.getElementById('jpi-ok').style.display=jpImpLista.length||jpImpExist.length?'inline-flex':'none';
+  openModal('mJpImp');
+}
+function jpImpConfirmar(){
+  var who=sbUser?sbUser.email:(respCanon(hrUltimoAdv())||''),n=0,ign=(cfg.jpIgnorados||[]).slice(),u=0;
+  [].forEach.call(document.querySelectorAll('#jpi-lista .jpi-ck'),function(ck){
+    var x=jpImpLista[+ck.dataset.i];if(!x)return;var o=x.o,k=o._k;
+    if(!ck.checked){if(ign.indexOf(k)<0)ign.push(k);return}
+    var mn0=x.mns[0],area=JP_AREAS.indexOf(mn0.area)>-1?mn0.area:'';
+    var j={id:uid(),trib:siglaTrib(o.trib),tipo:o.tipo||'Acórdão',classe:o.classe||'',numero:o.numero||'',relator:o.relator||'',orgao:o.orgao||'',dataJulg:o.dataJulg||'',dataPub:o.dataPub||'',veic:o.veic||'',area:area,pos:'favoravel',tema:o.tema||'',ementa:o.ementa||'',trecho:'',tags:['usado em minuta'],link:o.link||'',obs:'Importado da(s) minuta(s): '+x.mns.map(function(m){return m.titulo}).join('; '),procIds:[],conferido:false,conferidoEm:'',conferidoPor:'',criadoEm:new Date().toISOString(),criadoPor:who,importado:true};
+    x.mns.forEach(function(m){jpRegistrarUso(j,'minuta',m.titulo,m.id)});
+    jurisp.unshift(j);n++;
+  });
+  jpImpExist.forEach(function(e){if(jpRegistrarUso(e.j,'minuta',e.mn.titulo,e.mn.id))u++});
+  cfg.jpIgnorados=ign;saveAll();closeModal('mJpImp');
+  if(document.getElementById('jp-lista'))renderJurisp();
+  toast(n?n+' julgado(s) importado(s) como “a conferir”.':'Nenhum julgado importado.'+(u?' Uso registrado em '+u+'.':''),n?'ok':'warn');
+}
+function jpAposSalvarMinuta(mn){
+  var c=jpImpCandidatos(mn.id),u=0;
+  c.existentes.forEach(function(e){if(jpRegistrarUso(e.j,'minuta',mn.titulo,mn.id))u++});if(u)saveAll();
+  var ign=cfg.jpIgnorados||[],novos=c.novos.filter(function(x){return ign.indexOf(x.o._k)<0});
+  if(novos.length)toast(novos.length+' julgado(s) citado(s) nesta minuta ainda não está(ão) no banco de jurisprudência. <a style="cursor:pointer;text-decoration:underline;font-weight:700" onclick="jpImpAbrir(\''+mn.id+'\')">Revisar e importar</a>','warn');
 }
 
 var tabRender={kanban:renderKanban,dashboard:renderDashboard,processos:renderProcessos,clientes:renderClientes,tarefas:renderTarefas,prazos:renderPrazos,intimacoes:renderIntimacoes,atendimentos:renderAtendimentos,horas:renderHoras,minutas:renderMinutas,jurisprudencia:function(){minutaSub='jp';switchTabById('minutas')},agenda:renderAgenda,financeiro:renderFinanceiro,produtividade:renderProdutividade,relatorios:renderRelatorios,assinaturas:renderAssinaturas,calculos:renderCalculos,portais:renderPortais,historico:renderHistorico,config:renderConfig};
