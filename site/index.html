@@ -4268,7 +4268,7 @@ function gcalCarregarLib(){
   });
 }
 function gcalConectar(trocarConta){
-  if(location.protocol==='file:')return Promise.reject(new Error('o Google só permite conectar com o sistema publicado em um endereço (ex.: Netlify). Aberto como arquivo no computador, o login é bloqueado.'));
+  if(location.protocol==='file:')return Promise.reject(new Error('o Google só permite conectar com o sistema publicado em um endereço (ex.: Vercel). Aberto como arquivo no computador, o login é bloqueado.'));
   if(!gcalConfigurado()){cfgAba='integracoes';switchTabById('config');return Promise.reject(new Error('informe primeiro o ID do cliente Google em Configurações › Integrações.'))}
   return gcalCarregarLib().then(function(){return new Promise(function(res,rej){
     gcal._ok=res;gcal._err=rej;
@@ -4389,7 +4389,7 @@ function gcalCfgHtml(){
   var chk=function(k,l){return'<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="cf-genv-'+k+'" style="width:auto"'+(g.enviar[k]?' checked':'')+'> '+l+'</label>'};
   return'<div class="card" style="margin-bottom:16px"><div class="card-header"><h3><i class="ti ti-brand-google"></i> Conectar com a conta Google (envia e recebe)</h3>'+est+'</div><div style="padding:14px 16px;font-size:13px;line-height:1.6">'+
     '<p>Com a conta conectada, os compromissos e audiências marcados aqui vão <b>na hora</b> para o seu Google Agenda (com horário e lembrete no celular), e os eventos que você marca direto no Google aparecem na agenda e no Painel do sistema.</p>'+
-    (location.protocol==='file:'?'<div class="calc-aviso"><i class="ti ti-alert-triangle"></i> O sistema está aberto como arquivo no computador. O Google só permite este login com o sistema publicado em um endereço (ex.: Netlify). Enquanto isso, use a assinatura da agenda abaixo.</div>':'')+
+    (location.protocol==='file:'?'<div class="calc-aviso"><i class="ti ti-alert-triangle"></i> O sistema está aberto como arquivo no computador. O Google só permite este login com o sistema publicado em um endereço (ex.: Vercel). Enquanto isso, use a assinatura da agenda abaixo.</div>':'')+
     '<div class="cfg-form" style="margin-top:8px"><input id="cf-gcid" placeholder="ID do cliente — termina com .apps.googleusercontent.com" value="'+esc(g.clientId||'')+'" style="flex:1"></div>'+
     '<div style="display:flex;flex-wrap:wrap;gap:14px;margin:10px 0"><b style="font-size:12px;width:100%">Enviar ao Google:</b>'+chk('comp','Compromissos')+chk('aud','Audiências')+chk('prazo','Prazos')+chk('tarefa','Tarefas')+chk('intim','Intimações sem prazo lançado')+'</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp bs" onclick="gcalSalvarCfg()"><i class="ti ti-device-floppy"></i> Salvar</button>'+
@@ -4399,7 +4399,7 @@ function gcalCfgHtml(){
       '<li>Entre em <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> com a conta Google do escritório e crie um projeto (ex.: "Agenda Guerra Torres").</li>'+
       '<li>Em <b>APIs e serviços › Biblioteca</b>, procure <b>Google Calendar API</b> e clique em <b>Ativar</b>.</li>'+
       '<li>Em <b>Tela de consentimento OAuth</b>: tipo <b>Externo</b>, nome do app, seu e-mail. Em <b>Usuários de teste</b>, adicione o seu e-mail e o da Dra. Allane.</li>'+
-      '<li>Em <b>Credenciais › Criar credenciais › ID do cliente OAuth</b>: tipo <b>Aplicativo da Web</b>. Em <b>Origens JavaScript autorizadas</b>, coloque o endereço do sistema'+(origem?': <code>'+esc(origem)+'</code>':' publicado (ex.: https://guerratorres.netlify.app)')+'.</li>'+
+      '<li>Em <b>Credenciais › Criar credenciais › ID do cliente OAuth</b>: tipo <b>Aplicativo da Web</b>. Em <b>Origens JavaScript autorizadas</b>, coloque o endereço do sistema'+(origem?': <code>'+esc(origem)+'</code>':' publicado (ex.: https://crm-guerra-torres.vercel.app)')+'.</li>'+
       '<li>Copie o <b>ID do cliente</b>, cole acima e clique em <b>Salvar</b>. Depois, cada advogado clica em <b>Conectar minha conta Google</b> no próprio computador.</li>'+
       '<li>Na primeira vez o Google mostra o aviso "app não verificado" — é o seu próprio app; clique em <b>Continuar</b>.</li></ol></details>'+
   '</div></div>';
@@ -5344,7 +5344,7 @@ function gdrCfg(){cfg.drive=cfg.drive||{};if(cfg.drive.ativo==null)cfg.drive.ati
 function gdrConectado(){return!!gdr.token&&Date.now()<gdr.exp-60000}
 function gdrUsou(){try{return localStorage.getItem('gt_gdr_on')==='1'}catch(e){return false}}
 function gdrConectar(trocar){
-  if(location.protocol==='file:')return Promise.reject(new Error('o Google só permite conectar com o sistema publicado em um endereço (ex.: Netlify).'));
+  if(location.protocol==='file:')return Promise.reject(new Error('o Google só permite conectar com o sistema publicado em um endereço (ex.: Vercel).'));
   if(!gcalConfigurado()){cfgAba='integracoes';switchTabById('config');return Promise.reject(new Error('informe primeiro o ID do cliente Google em Configurações › Integrações.'))}
   return gcalCarregarLib().then(function(){return new Promise(function(res,rej){
     gdr._ok=res;gdr._err=rej;

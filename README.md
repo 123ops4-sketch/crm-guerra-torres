@@ -9,7 +9,7 @@ com banco e autenticação no Supabase.
 ## Estrutura
 
 ```
-site/index.html                     aplicação (publicada pelo Netlify)
+site/index.html                     aplicação (publicada pela Vercel)
 supabase/sql/01_setup.sql           tabelas, RLS, membros, histórico, bucket "anexos"
 supabase/sql/02_atualizacao_v2.sql  atualização v2
 supabase/sql/03_atualizacao_v3.sql  atualização v3 (crm_gravar — gravação com controle de concorrência)
@@ -31,14 +31,16 @@ modelos/                            modelos .docx com campos {{...}}
    `select vault.create_secret('SUA_SENHA', 'djen_cron_secret');`
 6. SQL Editor: rodar `04_agendamento_robo.sql`.
 
-## Publicação (Netlify)
+## Publicação (Vercel)
 
-Add new site › Import an existing project › GitHub › `crm-guerra-torres`.
-A pasta publicada (`site`) já vem definida no `netlify.toml`; não há comando de build.
-Cada commit na branch `main` gera novo deploy automaticamente.
+O `vercel.json` publica somente a pasta `site` (sem comando de build), de modo que os
+arquivos SQL e as funções do Supabase não ficam expostos no endereço público.
+Em Project Settings › Build and Deployment: Framework Preset **Other**, Root Directory
+**vazio** (raiz do repositório) e nenhum override de Build/Output — o `vercel.json` manda.
+Cada commit na branch `main` gera novo deploy de produção automaticamente.
 
 ## Google Agenda / Drive
 
 Funcionam somente com o sistema publicado (não em `file://`). Criar um OAuth Client ID
-(Google Cloud Console, APIs Calendar e Drive), autorizar o domínio do Netlify como
+(Google Cloud Console, APIs Calendar e Drive), autorizar o domínio da Vercel como
 *Authorized JavaScript origin* e colar o Client ID em Configurações do CRM.
