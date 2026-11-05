@@ -1,0 +1,12 @@
+# Segredos e configurações locais — nunca versionar
+.env
+.env.*
+*.key
+supabase/.temp/
+supabase/.branches/
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/
