@@ -4335,6 +4335,9 @@ function agDashHtml(){
 // ---------- Google Agenda (conexão direta pela conta Google) ----------
 var GCAL_ESCOPO='https://www.googleapis.com/auth/calendar.events';
 var gcal={token:null,exp:0,cliente:null,lista:[],janela:null,email:'',carregando:false};
+var GOOGLE_CONTA_PADRAO='guerraetorresadvocacia@gmail.com';
+function gcalConta(){var g=cfg.google||{};return String(g.conta===undefined?GOOGLE_CONTA_PADRAO:g.conta||'').trim().toLowerCase()}
+function gcalContaErrada(email){var c=gcalConta();return!!(c&&email&&String(email).toLowerCase()!==c)}
 function gcalCfg(){cfg.google=cfg.google||{};var g=cfg.google;if(!g.enviar)g.enviar={comp:true,aud:true,prazo:true,tarefa:false,intim:false};return g}
 function gcalConfigurado(){return!!(cfg.google&&cfg.google.clientId)}
 function gcalConectado(){return!!gcal.token&&Date.now()<gcal.exp-60000}
@@ -4358,7 +4361,7 @@ function gcalConectar(trocarConta){
   if(!gcalConfigurado()){cfgAba='integracoes';switchTabById('config');return Promise.reject(new Error('informe primeiro o ID do cliente Google em Configurações › Integrações.'))}
   return gcalCarregarLib().then(function(){return new Promise(function(res,rej){
     gcal._ok=res;gcal._err=rej;
-    if(!gcal.cliente)gcal.cliente=google.accounts.oauth2.initTokenClient({client_id:cfg.google.clientId,scope:GCAL_ESCOPO,
+    if(!gcal.cliente)gcal.cliente=google.accounts.oauth2.initTokenClient({client_id:cfg.google.clientId,scope:GCAL_ESCOPO,hint:gcalConta(),login_hint:gcalConta(),
       callback:function(r){if(r&&r.error){gcal._err(new Error(r.error_description||r.error));return}gcal.token=r.access_token;gcal.exp=Date.now()+((+r.expires_in)||3600)*1000;try{localStorage.setItem('gt_gcal_on','1')}catch(e){}gcalQuemSou();gcal._ok(gcal.token)},
       error_callback:function(e){gcal._err(new Error(e&&e.type||'login cancelado'))}});
     gcal.cliente.requestAccessToken({prompt:trocarConta?'select_account':''});
@@ -4379,7 +4382,7 @@ function gcalFetch(caminho,op,tentou){
     });
   });
 }
-function gcalQuemSou(){gcalFetch('calendars/primary').then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&j.id){gcal.email=j.id;if(currentTab==='dashboard'||currentTab==='config')render()}}).catch(function(){})}
+function gcalQuemSou(){gcalFetch('calendars/primary').then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&j.id){gcal.email=j.id;if(gcalContaErrada(j.id))toast('Agenda conectada em <b>'+esc(j.id)+'</b>, mas a conta do escritório é <b>'+esc(gcalConta())+'</b>. Em Configurações › Integrações, use <b>Trocar conta</b>.','danger');if(currentTab==='dashboard'||currentTab==='config')render()}}).catch(function(){})}
 // id próprio do evento no Google (a–v e 0–9), sempre o mesmo para o mesmo item do sistema
 function gcalIdDe(k,id){var s=k+'-'+id,h='';for(var i=0;i<s.length;i++)h+=s.charCodeAt(i).toString(16).padStart(2,'0');return'gtcrm'+h}
 function gcalEhNosso(id){return String(id||'').indexOf('gtcrm')===0}
@@ -4465,28 +4468,32 @@ function gcalSincronizar(avisar){
 function gcalSalvarCfg(){
   var g=gcalCfg(),cid=document.getElementById('cf-gcid').value.trim();
   if(cid&&!/\.apps\.googleusercontent\.com$/.test(cid)){toast('O ID do cliente termina com .apps.googleusercontent.com — confira o que foi copiado.','danger');return}
-  if(cid!==g.clientId){gcal.cliente=null;gcal.token=null}
+  var conta=(document.getElementById('cf-gconta')||{value:''}).value.trim().toLowerCase();
+  if(conta&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(conta)){toast('Confira o e-mail da conta do escritório.','danger');return}
+  if(cid!==g.clientId||conta!==gcalConta()){gcal.cliente=null;gcal.token=null;gdr.cliente=null;gdr.token=null}
+  g.conta=conta;
   g.clientId=cid;['comp','aud','prazo','tarefa','intim'].forEach(function(k){var el=document.getElementById('cf-genv-'+k);if(el)g.enviar[k]=el.checked});
   cfgSalvar('Configuração do Google Agenda salva.');renderConfig();
 }
 function gcalCfgHtml(){
   var g=gcalCfg(),origem=location.protocol==='file:'||!/^https?:/.test(String(location.origin))?'':location.origin;
-  var est=gcalConectado()?'<span class="badge b-concluido"><i class="ti ti-circle-check"></i> Conectado'+(gcal.email?' — '+esc(gcal.email):'')+'</span>':g.clientId?'<span class="badge b-aguardando">Não conectado neste navegador</span>':'<span class="badge b-pend">Não configurado</span>';
+  var est=gcalConectado()?(gcalContaErrada(gcal.email)?'<span class="badge b-pend"><i class="ti ti-alert-triangle"></i> Conta diferente: '+esc(gcal.email)+'</span>':'<span class="badge b-concluido"><i class="ti ti-circle-check"></i> Conectado'+(gcal.email?' — '+esc(gcal.email):'')+'</span>'):g.clientId?'<span class="badge b-aguardando">Não conectado neste navegador</span>':'<span class="badge b-pend">Não configurado</span>';
   var chk=function(k,l){return'<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="cf-genv-'+k+'" style="width:auto"'+(g.enviar[k]?' checked':'')+'> '+l+'</label>'};
   return'<div class="card" style="margin-bottom:16px"><div class="card-header"><h3><i class="ti ti-brand-google"></i> Conectar com a conta Google (envia e recebe)</h3>'+est+'</div><div style="padding:14px 16px;font-size:13px;line-height:1.6">'+
     '<p>Com a conta conectada, os compromissos e audiências marcados aqui vão <b>na hora</b> para o seu Google Agenda (com horário e lembrete no celular), e os eventos que você marca direto no Google aparecem na agenda e no Painel do sistema.</p>'+
     (location.protocol==='file:'?'<div class="calc-aviso"><i class="ti ti-alert-triangle"></i> O sistema está aberto como arquivo no computador. O Google só permite este login com o sistema publicado em um endereço (ex.: Vercel). Enquanto isso, use a assinatura da agenda abaixo.</div>':'')+
-    '<div class="cfg-form" style="margin-top:8px"><input id="cf-gcid" placeholder="ID do cliente — termina com .apps.googleusercontent.com" value="'+esc(g.clientId||'')+'" style="flex:1"></div>'+
+    '<div class="cfg-form" style="margin-top:8px"><label style="font-size:12px;font-weight:600;min-width:130px">Conta do escritório</label><input id="cf-gconta" type="email" placeholder="conta Google da agenda" value="'+esc(g.conta===undefined?GOOGLE_CONTA_PADRAO:g.conta||'')+'" style="flex:1"></div>'+
+    '<div class="cfg-form" style="margin-top:8px"><label style="font-size:12px;font-weight:600;min-width:130px">ID do cliente</label><input id="cf-gcid" placeholder="ID do cliente — termina com .apps.googleusercontent.com" value="'+esc(g.clientId||'')+'" style="flex:1"></div>'+
     '<div style="display:flex;flex-wrap:wrap;gap:14px;margin:10px 0"><b style="font-size:12px;width:100%">Enviar ao Google:</b>'+chk('comp','Compromissos')+chk('aud','Audiências')+chk('prazo','Prazos')+chk('tarefa','Tarefas')+chk('intim','Intimações sem prazo lançado')+'</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp bs" onclick="gcalSalvarCfg()"><i class="ti ti-device-floppy"></i> Salvar</button>'+
     (g.clientId?(gcalConectado()?'<button class="btn bo bs" onclick="gcalSincronizar(true)"><i class="ti ti-refresh"></i> Sincronizar agora</button><button class="btn bo bs" onclick="gcalConectar(true).then(function(){gcalSincronizar(true)}).catch(gcalErro)"><i class="ti ti-switch-horizontal"></i> Trocar conta</button><button class="btn bd bs" onclick="gcalDesconectar()"><i class="ti ti-plug-off"></i> Desconectar</button>':'<button class="btn fin-btn-ent bs" onclick="gcalConectar().then(function(){gcalSincronizar(true)}).catch(gcalErro)"><i class="ti ti-brand-google"></i> Conectar minha conta Google</button>'):'')+'</div>'+
     (g.ultimaSinc?'<p class="cfg-nota" style="margin-top:8px">Última sincronização: '+new Date(g.ultimaSinc).toLocaleString('pt-BR')+'</p>':'')+
     '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">Como obter o ID do cliente (uma vez só, cerca de 10 minutos)</summary><ol style="margin:8px 0 0 18px;padding:0">'+
-      '<li>Entre em <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> com a conta Google do escritório e crie um projeto (ex.: "Agenda Guerra Torres").</li>'+
-      '<li>Em <b>APIs e serviços › Biblioteca</b>, procure <b>Google Calendar API</b> e clique em <b>Ativar</b>.</li>'+
-      '<li>Em <b>Tela de consentimento OAuth</b>: tipo <b>Externo</b>, nome do app, seu e-mail. Em <b>Usuários de teste</b>, adicione o seu e-mail e o da Dra. Allane.</li>'+
+      '<li>Entre em <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> com a conta Google do escritório (<b>'+esc(gcalConta()||'a conta acima')+'</b>) e crie um projeto (ex.: "Agenda Guerra Torres").</li>'+
+      '<li>Em <b>APIs e serviços › Biblioteca</b>, procure <b>Google Calendar API</b> e clique em <b>Ativar</b>. Faça o mesmo com a <b>Google Drive API</b> (para a pasta dos clientes).</li>'+
+      '<li>Em <b>Tela de consentimento OAuth</b>: tipo <b>Externo</b>, nome do app, seu e-mail. Em <b>Usuários de teste</b>, adicione <b>'+esc(gcalConta()||'a conta do escritório')+'</b>.</li>'+
       '<li>Em <b>Credenciais › Criar credenciais › ID do cliente OAuth</b>: tipo <b>Aplicativo da Web</b>. Em <b>Origens JavaScript autorizadas</b>, coloque o endereço do sistema'+(origem?': <code>'+esc(origem)+'</code>':' publicado (ex.: https://crm-guerra-torres.vercel.app)')+'.</li>'+
-      '<li>Copie o <b>ID do cliente</b>, cole acima e clique em <b>Salvar</b>. Depois, cada advogado clica em <b>Conectar minha conta Google</b> no próprio computador.</li>'+
+      '<li>Copie o <b>ID do cliente</b>, cole acima e clique em <b>Salvar</b>. Depois, em cada computador, clique em <b>Conectar</b> e entre com <b>'+esc(gcalConta()||'a conta do escritório')+'</b> — o sistema já sugere essa conta e avisa se outra for usada.</li>'+
       '<li>Na primeira vez o Google mostra o aviso "app não verificado" — é o seu próprio app; clique em <b>Continuar</b>.</li></ol></details>'+
   '</div></div>';
 }
@@ -5434,7 +5441,7 @@ function gdrConectar(trocar){
   if(!gcalConfigurado()){cfgAba='integracoes';switchTabById('config');return Promise.reject(new Error('informe primeiro o ID do cliente Google em Configurações › Integrações.'))}
   return gcalCarregarLib().then(function(){return new Promise(function(res,rej){
     gdr._ok=res;gdr._err=rej;
-    if(!gdr.cliente)gdr.cliente=google.accounts.oauth2.initTokenClient({client_id:cfg.google.clientId,scope:GDR_ESCOPO,
+    if(!gdr.cliente)gdr.cliente=google.accounts.oauth2.initTokenClient({client_id:cfg.google.clientId,scope:GDR_ESCOPO,hint:gcalConta(),login_hint:gcalConta(),
       callback:function(r){if(r&&r.error){gdr._err(new Error(r.error_description||r.error));return}gdr.token=r.access_token;gdr.exp=Date.now()+((+r.expires_in)||3600)*1000;try{localStorage.setItem('gt_gdr_on','1')}catch(e){}gdrQuemSou();gdr._ok(gdr.token)},
       error_callback:function(e){gdr._err(new Error(e&&e.type||'login cancelado'))}});
     gdr.cliente.requestAccessToken({prompt:trocar?'select_account':''});
@@ -5447,7 +5454,7 @@ function gdrFetch(url,op,tentou){
     return fetch(url,op).then(function(r){if(r.status===401&&!tentou){gdr.token=null;return gdrFetch(url,op,true)}return r})});
 }
 function gdrJson(r){if(!r.ok)return r.text().then(function(t){throw new Error('o Google Drive respondeu '+r.status+(t?': '+t.slice(0,120):''))});return r.json()}
-function gdrQuemSou(){gdrFetch(GDR_API+'about?fields=user(emailAddress)').then(gdrJson).then(function(j){gdr.email=(j.user||{}).emailAddress||'';if(currentTab==='config')renderConfig()}).catch(function(){})}
+function gdrQuemSou(){gdrFetch(GDR_API+'about?fields=user(emailAddress)').then(gdrJson).then(function(j){gdr.email=(j.user||{}).emailAddress||'';if(gcalContaErrada(gdr.email))toast('Drive conectado em <b>'+esc(gdr.email)+'</b>, mas a conta do escritório é <b>'+esc(gcalConta())+'</b>. Use <b>Trocar conta</b> no Drive.','danger');if(currentTab==='config')renderConfig()}).catch(function(){})}
 function gdrErro(e){var m=String(e&&e.message||e||'');if(!m||/cancel|popup_closed|access_denied/i.test(m))return;toast('Google Drive: '+esc(m),'danger')}
 // ---------- pastas ----------
 function gdrNovaPasta(nome,pai,props){
@@ -5543,7 +5550,7 @@ function gdrSincronizar(avisar){
 }
 function gdrSalvarCfg(){var g=gdrCfg();g.ativo=document.getElementById('cf-gdr-ativo').checked;var nm=document.getElementById('cf-gdr-raiz').value.trim();if(nm)g.raizNome=nm;cfgSalvar('Configuração do Google Drive salva.');renderConfig()}
 function gdrCfgHtml(){
-  var g=gdrCfg(),pd=gdrPendencias(),est=gdrConectado()?'<span class="badge b-concluido"><i class="ti ti-circle-check"></i> Conectado'+(gdr.email?' — '+esc(gdr.email):'')+'</span>':'<span class="badge b-aguardando">Não conectado neste navegador</span>';
+  var g=gdrCfg(),pd=gdrPendencias(),est=gdrConectado()?(gcalContaErrada(gdr.email)?'<span class="badge b-pend"><i class="ti ti-alert-triangle"></i> Conta diferente: '+esc(gdr.email)+'</span>':'<span class="badge b-concluido"><i class="ti ti-circle-check"></i> Conectado'+(gdr.email?' — '+esc(gdr.email):'')+'</span>'):'<span class="badge b-aguardando">Não conectado neste navegador</span>';
   return'<div class="card" style="margin-bottom:16px"><div class="card-header"><h3><i class="ti ti-brand-google-drive"></i> Google Drive — cópia dos clientes e documentos</h3>'+est+'</div><div style="padding:14px 16px;font-size:13px;line-height:1.6">'+
     '<p>Tudo continua salvo no Supabase. O Drive recebe <b>uma cópia</b> organizada assim:</p>'+
     '<div class="gdr-arvore"><div><i class="ti ti-folder"></i> '+esc(g.raizNome)+'</div><div style="padding-left:18px"><i class="ti ti-folder"></i> Maria das Dores Silva — 123.456.789-09</div><div style="padding-left:36px"><i class="ti ti-file-text"></i> Cadastro — Maria das Dores Silva <span>(atualizado sozinho)</span></div><div style="padding-left:36px"><i class="ti ti-folder"></i> Documentos <span>(cópia de cada arquivo anexado)</span></div></div>'+
