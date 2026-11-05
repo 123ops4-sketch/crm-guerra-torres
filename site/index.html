@@ -437,7 +437,6 @@ body.com-crono{padding-bottom:76px}
 .jp-fb,.jp-fg{background:none;border:none;font-family:inherit;font-size:12px;font-weight:600;color:var(--wine);padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .jp-fg{border-left:1px solid var(--border2);color:var(--text3);padding:6px 8px;font-weight:700}
 .jp-fb:hover,.jp-fg:hover{background:var(--cream)}
-.jp-jusia{background:linear-gradient(135deg,var(--wine),var(--wine2));color:#fff;border:none;border-radius:var(--r);font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}.jp-jusia:hover{filter:brightness(1.1)}
 .jp-card{padding:13px 15px;margin-bottom:10px;overflow:visible}
 .jp-top{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
 .jp-cab{font-weight:700;font-size:13px;color:var(--wine)}
@@ -5673,42 +5672,12 @@ function jpAbrirFonte(i,google){
   else{url=f.url;if(q){try{navigator.clipboard.writeText(q)}catch(e){}toast('Termo copiado: cole (Ctrl+V) no campo de pesquisa do '+esc(f.nome)+'.','ok')}}
   var w=window.open(url,'_blank','noopener');if(!w)toast('O navegador bloqueou a nova aba. Permita pop-ups para este sistema.','danger');
 }
-// ---------- JusIA (assistente do Jusbrasil): monta a pergunta, copia e abre ----------
-var JP_JUSIA_URL='https://ia.jusbrasil.com.br/';
-function jpTribsPref(area){
-  if(area==='Trabalhista')return['TST','TRT18 (Goiás)','demais TRTs'];
-  if(area==='Previdenciário')return['STJ','TRF1','TNU','STF (repercussão geral)'];
-  if(area==='Tributário'||area==='Administrativo')return['STF','STJ','TRF1','TJGO'];
-  return['STJ','TJGO','TJMG','STF (quando houver matéria constitucional)'];
-}
-function jpPromptJusIA(q,area,proc){
-  var l=['Pesquise jurisprudência sobre: '+q+'.'];
-  if(area)l.push('Área: '+area+'.');
-  if(proc)l.push('Contexto do caso: '+[proc.tipoAcao||proc.area,proc.trib?'tramitando no '+proc.trib:''].filter(Boolean).join(', ')+'.');
-  l.push('Tribunais prioritários: '+jpTribsPref(area).join(', ')+'.');
-  l.push('Dê preferência a julgados dos últimos 5 anos e informe se há tese firmada (súmula, recurso repetitivo, repercussão geral, IRR ou IRDR).');
-  l.push('Para cada julgado, informe: tribunal; classe e número do processo; relator(a); órgão julgador; data do julgamento e da publicação; a ementa ou o trecho relevante; e o link da fonte.');
-  l.push('Separe os julgados favoráveis e os contrários à tese.');
-  l.push('Cite somente julgados que existam, com número e link verificáveis. Não resuma de memória nem complete dados faltantes; se não houver precedente seguro, diga expressamente.');
-  return l.join('\n');
-}
-function jpJusIA(){
-  var q=String((document.getElementById('jp-q')||{}).value||jpF.q||'').trim();
-  if(!q){toast('Digite primeiro o tema da pesquisa no campo de busca.','warn');var i=document.getElementById('jp-q');if(i)i.focus();return}
-  var proc=jpVinc?procs.filter(function(x){return x.id===jpVinc})[0]:null;
-  var area=jpF.area||(proc&&JP_AREAS.indexOf(proc.area)>-1?proc.area:'');
-  var txt=jpPromptJusIA(q,area,proc);
-  try{navigator.clipboard.writeText(txt).then(function(){},function(){prompt('Copie a pergunta para o JusIA:',txt)})}catch(e){prompt('Copie a pergunta para o JusIA:',txt)}
-  var w=window.open(JP_JUSIA_URL,'_blank','noopener');if(!w)toast('O navegador bloqueou a nova aba. Permita pop-ups para este sistema.','danger');
-  toast('Pergunta copiada. No JusIA, cole (Ctrl+V) e envie. Depois traga os julgados úteis com "Salvar julgado".','ok');
-}
 function jpFontesHtml(){
   var fs=jpFontes();
   var ord=fs.map(function(f,i){return{f:f,i:i,pr:jpF.area&&f.areas&&f.areas.split(',').map(function(s){return s.trim()}).indexOf(jpF.area)>-1?0:1}}).sort(function(a,b){return a.pr-b.pr||a.i-b.i});
   return'<div class="jp-fontes">'+ord.map(function(o){var f=o.f,dir=f.url&&f.url.indexOf('{q}')>-1;
     return'<span class="jp-fonte'+(o.pr===0?' dest':'')+'"><button class="jp-fb" onclick="jpAbrirFonte('+o.i+')" title="'+(dir?'Abre a pesquisa já com o termo':f.url?'Abre o site e copia o termo para colar':'Pesquisa no Google restrita ao site oficial')+'"><i class="ti '+(dir?'ti-search':f.url?'ti-clipboard-copy':'ti-brand-google')+'"></i> '+esc(f.nome)+'</button>'+
       (f.dom&&f.url?'<button class="jp-fg" onclick="jpAbrirFonte('+o.i+',true)" title="Pesquisar no Google só em '+esc(f.dom)+'">G</button>':'')+'</span>'}).join('')+
-    '<button class="jp-jusia" onclick="jpJusIA()" title="Monta a pergunta de pesquisa (termo, área, tribunais e exigência de fonte), copia e abre o JusIA"><i class="ti ti-sparkles"></i> Perguntar ao JusIA</button>'+
     '<button class="btn bo bs" onclick="jpEditarFontes()" title="Incluir ou corrigir endereços de pesquisa"><i class="ti ti-adjustments"></i> Fontes</button></div>';
 }
 function jpEditarFontes(){
@@ -5738,7 +5707,7 @@ function renderJurisp(){
     (jpVinc?'<div class="calc-aviso" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><i class="ti ti-link"></i><span style="flex:1">Vinculando ao processo <b>'+esc(jpProcLabel(jpVinc))+'</b>. Sem termo de busca, aparecem só os já vinculados; pesquise para vincular outros.</span><button class="btn bo bs" onclick="openPanel(\''+jpVinc+'\')"><i class="ti ti-folder"></i> Abrir processo</button><button class="btn bo bs" onclick="jpVinc=null;renderJurisp()"><i class="ti ti-x"></i> Sair do modo vínculo</button></div>':'')+
     '<div class="card" style="padding:14px 16px;margin-bottom:14px">'+
       '<div class="gt-search" style="margin-bottom:10px"><i class="ti ti-search"></i><input id="jp-q" value="'+esc(jpF.q)+'" placeholder="Pesquisar: palavras ou &quot;frase exata&quot; — ex.: fraude bancária &quot;súmula 479&quot; dano moral" oninput="jpF.q=this.value;renderJpLista()" onkeydown="if(event.key===\'Enter\')renderJpLista()" autocomplete="off"></div>'+
-      '<div style="font-size:11px;color:var(--text3);margin-bottom:6px"><b>Pesquisar este termo nos tribunais</b> · <i class="ti ti-search"></i> já abre com o termo · <i class="ti ti-clipboard-copy"></i> abre o site e copia o termo para colar · <b>G</b> Google só no site oficial · <b>JusIA</b> copia a pergunta pronta e abre o assistente do Jusbrasil</div>'+
+      '<div style="font-size:11px;color:var(--text3);margin-bottom:6px"><b>Pesquisar este termo nos tribunais</b> · <i class="ti ti-search"></i> já abre com o termo · <i class="ti ti-clipboard-copy"></i> abre o site e copia o termo para colar · <b>G</b> Google só no site oficial</div>'+
       jpFontesHtml()+
     '</div>'+
     '<div class="toolbar" style="flex-wrap:wrap">'+
