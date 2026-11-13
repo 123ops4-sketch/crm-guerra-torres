@@ -1665,7 +1665,7 @@ function cliEndereco(c){c=c||{};var e=String(c.end||'').trim(),k=String(c.compl|
   var m=e.match(/(n[º°o.]?\s*\d+[A-Za-z]?|s\/\s*n[º°o]?)/i);if(m){var i=m.index+m[0].length;return e.slice(0,i)+', '+k+e.slice(i)}return e+', '+k}
 function cliChecaDuplicado(){var d=soDigitos(document.getElementById('fc-doc').value),h=document.getElementById('fc-doc-hint');if(!h)return null;var dup=d.length>=11?clientes.filter(function(c){return c.id!==editIds.cli&&soDigitos(c.doc)===d})[0]:null;h.innerHTML=dup?'<span style="color:#b91c1c"><i class="ti ti-alert-triangle"></i> Já cadastrado: '+esc(dup.nome)+'</span>':(d&&d.length!==11&&d.length!==14?'<span style="color:#b45309">'+(cliTipoAtual()==='PJ'?'CNPJ tem 14 números':'CPF tem 11 números')+'</span>':(d.length===11&&!cpfValido(d)?'<span style="color:#b45309"><i class="ti ti-alert-triangle"></i> CPF inválido (dígito verificador). Confira.</span>':(d.length===14&&!cnpjValido(d)?'<span style="color:#b45309"><i class="ti ti-alert-triangle"></i> CNPJ inválido (dígito verificador). Confira.</span>':'')));return dup}
 function openCliModal(id){cliRapidoAlvo=null;editIds.cli=id||null;var c=id?clientes.filter(function(x){return x.id===id})[0]:{};document.getElementById('mCliT').textContent=id?'Editar cliente':'Novo cliente';['nome','doc','tel','email','end','compl','cid','cep','obs','rg','nac','civil','prof'].forEach(function(k){document.getElementById('fc-'+k).value=c[k]||''});document.getElementById('fc-uf').value=c.uf||'';document.getElementById('fc-vh').value=c.valorHora?numBR(c.valorHora):'';document.getElementById('fc-drive').value=(c.drive&&c.drive.link)||c.driveLink||'';var ch=document.getElementById('fc-cep-hint');if(ch)ch.innerHTML=cepHintPadrao();_cepUlt='';var tp=c.tipo||(soDigitos(c.doc).length===14?'Pessoa Jurídica':'Pessoa Física');cliTipoMudou(tp,true);document.getElementById('fc-tel').value=c.tel?mascaraTel(telCompletar(c.tel)):'';var _th=document.getElementById('fc-tel-hint');if(_th)_th.innerHTML='';document.getElementById('fc-aniv').value=c.aniv||'';cliOrigemSet(c.origem);var hh=document.getElementById('fc-doc-hint');if(hh)hh.innerHTML='';openModal('mCliente')}
-function saveCliente(){var nome=document.getElementById('fc-nome').value.trim();if(!nome){alert('Nome obrigatório.');return}var fe=document.getElementById('fc-end');if(/nº\s*(,|$)/.test(fe.value)){if(!confirm('Falta o número no endereço. Salvar como "s/nº"?')){fe.focus();return}fe.value=fe.value.replace(/nº\s*(,|$)/,'s/nº$1')}var dup=cliChecaDuplicado();if(dup&&!confirm('Já existe um cliente com este CPF/CNPJ: '+dup.nome+'.\nSalvar mesmo assim?'))return;var _dd=soDigitos(document.getElementById('fc-doc').value);var o={id:editIds.cli||uid(),nome:nome,doc:(_dd.length===11||_dd.length===14)?fmtDoc(_dd):document.getElementById('fc-doc').value.trim(),tipo:document.getElementById('fc-tipo').value,tel:mascaraTel(telCompletar(document.getElementById('fc-tel').value.trim()))||document.getElementById('fc-tel').value.trim(),email:document.getElementById('fc-email').value.trim(),end:document.getElementById('fc-end').value.trim(),compl:document.getElementById('fc-compl').value.trim(),cid:document.getElementById('fc-cid').value.trim(),cep:document.getElementById('fc-cep').value.trim(),uf:document.getElementById('fc-uf').value,rg:document.getElementById('fc-rg').value.trim(),nac:document.getElementById('fc-nac').value.trim(),civil:document.getElementById('fc-civil').value.trim(),prof:document.getElementById('fc-prof').value.trim(),valorHora:lerValorBR(document.getElementById('fc-vh').value)||0,driveLink:(function(v){return/^https?:\/\//.test(v)?v:''})(document.getElementById('fc-drive').value.trim()),aniv:document.getElementById('fc-aniv').value,origem:cliOrigemGet(),obs:document.getElementById('fc-obs').value.trim()};var nomeAntigo=null;if(editIds.cli){var i=clientes.findIndex(function(x){return x.id===editIds.cli});nomeAntigo=clientes[i].nome;clientes[i]=Object.assign({},clientes[i],o)}else clientes.unshift(o);if(nomeAntigo&&nomeAntigo!==o.nome)procs.forEach(function(p){if(p.cliId===o.id||p.cli===nomeAntigo){p.cli=o.nome;p.cliId=o.id}});saveAll();closeModal('mCliente');toast('Cliente salvo!','ok');gdrAposSalvarCliente(cliPorId(o.id));if(cliRapidoAlvo){var inp=document.getElementById(cliRapidoAlvo);inp.value=o.nome;inp.dataset.cliId=o.id;if(cliRapidoAlvo==='fhv-cli'){cliRapidoAlvo=null;honAvHint();renderStats();return}if(/^kb-cli-/.test(cliRapidoAlvo)){var _col=cliRapidoAlvo.slice(7);cliRapidoAlvo=null;kbAddCliSalvar(_col);renderStats();return}if(cliRapidoAlvo==='fp-cli'){if(!document.getElementById('fp-cid').value&&o.cid)document.getElementById('fp-cid').value=o.cid;procCliHint()}cliRapidoAlvo=null;renderStats();return}renderClientes();renderStats()}
+function saveCliente(){var nome=document.getElementById('fc-nome').value.trim();if(!nome){alert('Nome obrigatório.');return}var fe=document.getElementById('fc-end');if(/nº\s*(,|$)/.test(fe.value)){if(!confirm('Falta o número no endereço. Salvar como "s/nº"?')){fe.focus();return}fe.value=fe.value.replace(/nº\s*(,|$)/,'s/nº$1')}var dup=cliChecaDuplicado();if(dup&&!confirm('Já existe um cliente com este CPF/CNPJ: '+dup.nome+'.\nSalvar mesmo assim?'))return;var _dd=soDigitos(document.getElementById('fc-doc').value);var o={id:editIds.cli||uid(),nome:nome,doc:(_dd.length===11||_dd.length===14)?fmtDoc(_dd):document.getElementById('fc-doc').value.trim(),tipo:document.getElementById('fc-tipo').value,tel:mascaraTel(telCompletar(document.getElementById('fc-tel').value.trim()))||document.getElementById('fc-tel').value.trim(),email:document.getElementById('fc-email').value.trim(),end:document.getElementById('fc-end').value.trim(),compl:document.getElementById('fc-compl').value.trim(),cid:document.getElementById('fc-cid').value.trim(),cep:document.getElementById('fc-cep').value.trim(),uf:document.getElementById('fc-uf').value,rg:document.getElementById('fc-rg').value.trim(),nac:document.getElementById('fc-nac').value.trim(),civil:document.getElementById('fc-civil').value.trim(),prof:document.getElementById('fc-prof').value.trim(),valorHora:lerValorBR(document.getElementById('fc-vh').value)||0,driveLink:(function(v){return/^https?:\/\//.test(v)?v:''})(document.getElementById('fc-drive').value.trim()),aniv:document.getElementById('fc-aniv').value,origem:cliOrigemGet(),obs:document.getElementById('fc-obs').value.trim()};var nomeAntigo=null;if(editIds.cli){var i=clientes.findIndex(function(x){return x.id===editIds.cli});nomeAntigo=clientes[i].nome;clientes[i]=Object.assign({},clientes[i],o)}else{o.criadoEm=new Date().toISOString();clientes.unshift(o)}if(nomeAntigo&&nomeAntigo!==o.nome)procs.forEach(function(p){if(p.cliId===o.id||p.cli===nomeAntigo){p.cli=o.nome;p.cliId=o.id}});saveAll();closeModal('mCliente');toast('Cliente salvo!','ok');gdrAposSalvarCliente(cliPorId(o.id));if(cliRapidoAlvo){var inp=document.getElementById(cliRapidoAlvo);inp.value=o.nome;inp.dataset.cliId=o.id;if(cliRapidoAlvo==='fhv-cli'){cliRapidoAlvo=null;honAvHint();renderStats();return}if(/^kb-cli-/.test(cliRapidoAlvo)){var _col=cliRapidoAlvo.slice(7);cliRapidoAlvo=null;kbAddCliSalvar(_col);renderStats();return}if(cliRapidoAlvo==='fp-cli'){if(!document.getElementById('fp-cid').value&&o.cid)document.getElementById('fp-cid').value=o.cid;procCliHint()}cliRapidoAlvo=null;renderStats();return}renderClientes();renderStats()}
 function delCli(id){if(!confirm('Excluir cliente?'))return;clientes=clientes.filter(function(x){return x.id!==id});saveAll();renderClientes();renderStats()}
 
 // ANEXOS DO CLIENTE
@@ -6322,16 +6322,16 @@ var E2_TAREFAS=[
     if(!l.length)return e2R('Intimações pendentes','Nenhuma intimação pendente.','Todas as intimações estão tratadas.');
     return e2R('Intimações pendentes',l.length+' intimação(ões) pendente(s).',e2Lista(l,function(i){var p=agProc(i.procId);return'<li><b>'+esc(p.cli||i.numProc||'Processo')+'</b>'+(i.pz?' · prazo '+e2Data(i.pz)+(i.pz<todayStr?' <b style="color:#b91c1c">vencido</b>':''):' · <i>sem prazo</i>')+'</li>'}),[['Abrir Intimações',function(){switchTabById('intimacoes')}]]);
   }},
-  {id:'semana',func:'lucia',nome:'Prazos da semana',pal:['prazo','semana','vencendo','vence hoje'],rodar:function(){
-    var fim=addDays(todayStr,7),l=prazos.filter(function(z){return!z.cumprido&&z.limite&&z.limite<=fim&&z.tipo!=='audiencia'}).sort(function(a,b){return a.limite.localeCompare(b.limite)});
-    if(!l.length)return e2R('Prazos da semana','Nenhum prazo até '+e2Data(fim)+'.','Nenhum prazo vencido nem vencendo nos próximos 7 dias.');
+  {id:'semana',func:'lucia',nome:'Prazos da semana',pal:['prazo','vencendo','vence hoje'],periodo:'futuro',padrao:e2PerFuturo(7),rodar:function(arg){
+    var P=e2Per(arg,this),fim=P.fim,l=prazos.filter(function(z){return!z.cumprido&&z.limite&&z.limite<=fim&&(z.limite>=P.ini||z.limite<todayStr)&&z.tipo!=='audiencia'}).sort(function(a,b){return a.limite.localeCompare(b.limite)});
+    if(!l.length)return e2R('Prazos — '+P.rot,'Nenhum prazo '+e2Em(P.rot)+'.','Nenhum prazo vencido nem vencendo '+e2Em(P.rot)+'.');
     var venc=l.filter(function(z){return z.limite<todayStr}).length;
-    return e2R('Prazos da semana',(venc?venc+' vencido(s) e ':'')+l.length+' prazo(s) na semana.',e2Lista(l,function(z){var p=agProc(z.procId);return'<li'+(z.limite<todayStr?' class="e2-venc"':'')+'><b>'+e2Data(z.limite)+'</b> · '+esc(z.desc)+(p.cli?' — '+esc(p.cli):'')+'</li>'},10),[['Abrir Prazos',function(){switchTabById('prazos')}]]);
+    return e2R('Prazos — '+P.rot,(venc?venc+' vencido(s) e ':'')+(l.length-venc)+' prazo(s) '+e2Em(P.rot)+'.',e2Lista(l,function(z){var p=agProc(z.procId);return'<li'+(z.limite<todayStr?' class="e2-venc"':'')+'><b>'+e2Data(z.limite)+'</b> · '+esc(z.desc)+(p.cli?' — '+esc(p.cli):'')+'</li>'},10),[['Abrir Prazos',function(){switchTabById('prazos')}]]);
   }},
-  {id:'aud',func:'lucia',nome:'Audiências (15 dias)',pal:['audienc'],rodar:function(){
-    var fim=addDays(todayStr,15),l=prazos.filter(function(z){return!z.cumprido&&z.tipo==='audiencia'&&z.limite>=todayStr&&z.limite<=fim}).sort(function(a,b){return(a.limite+(a.hora||'')).localeCompare(b.limite+(b.hora||''))});
-    if(!l.length)return e2R('Audiências','Nenhuma audiência em 15 dias.','Nenhuma audiência marcada até '+fmt(fim)+'.');
-    return e2R('Audiências',l.length+' audiência(s) em 15 dias.',e2Lista(l,function(z){var p=agProc(z.procId);return'<li><b>'+e2Data(z.limite)+(z.hora?' '+esc(z.hora):'')+'</b> · '+esc(p.cli||(cliPorId(z.cliId)||{}).nome||'')+(z.desc&&z.desc!=='designada'?' — '+esc(z.desc):'')+(z.local?' · '+esc(z.local):'')+'</li>'}),[['Abrir Agenda',function(){switchTabById('agenda')}]]);
+  {id:'aud',func:'lucia',nome:'Audiências (15 dias)',pal:['audienc'],periodo:'futuro',padrao:e2PerFuturo(15),rodar:function(arg){
+    var P=e2Per(arg,this),fim=P.fim,l=prazos.filter(function(z){return!z.cumprido&&z.tipo==='audiencia'&&z.limite>=P.ini&&z.limite<=fim}).sort(function(a,b){return(a.limite+(a.hora||'')).localeCompare(b.limite+(b.hora||''))});
+    if(!l.length)return e2R('Audiências — '+P.rot,'Nenhuma audiência '+e2Em(P.rot)+'.','Nenhuma audiência marcada '+e2Em(P.rot)+' ('+fmt(P.ini)+' a '+fmt(fim)+').');
+    return e2R('Audiências — '+P.rot,l.length+' audiência(s) '+e2Em(P.rot)+'.',e2Lista(l,function(z){var p=agProc(z.procId);return'<li><b>'+e2Data(z.limite)+(z.hora?' '+esc(z.hora):'')+'</b> · '+esc(p.cli||(cliPorId(z.cliId)||{}).nome||'')+(z.desc&&z.desc!=='designada'?' — '+esc(z.desc):'')+(z.local?' · '+esc(z.local):'')+'</li>'}),[['Abrir Agenda',function(){switchTabById('agenda')}]]);
   }},
   {id:'gsync',func:'lucia',nome:'Sincronizar Google Agenda',pal:['google','sincroniz'],dur:2,rodar:function(){
     if(!gcalConectado())return e2R('Google Agenda','O Google Agenda não está conectado.','Conecte o Google Agenda em Configurações › Integrações e me peça de novo.',[['Abrir Configurações',function(){cfgAba='integracoes';switchTabById('config')}]]);
@@ -6343,21 +6343,73 @@ var E2_TAREFAS=[
     tarefas.unshift(o);saveAll();if(o.prazo)setTimeout(function(){gcalAposSalvar('tarefa',o.id)},0);
     return e2R('Tarefa criada','Anotei: '+o.titulo,'Criei a tarefa <b>'+esc(o.titulo)+'</b>'+(o.prazo?' para '+fmt(o.prazo):'')+(o.cliId?' ligada a '+esc((cliPorId(o.cliId)||{}).nome):'')+' no quadro de tarefas.',[['Abrir cartão',function(){kbAbrirCartao(o.id)}]]);
   }},
-  {id:'venc',func:'marcos',nome:'Cobrar honorários vencidos',pal:['cobr','vencid','inadimpl','atrasad','devendo','em aberto'],rodar:function(){
+  {id:'venc',func:'marcos',nome:'Cobrar honorários vencidos',pal:['cobr','vencid','inadimpl','atrasad','devendo','honorarios em aberto'],rodar:function(){
     var g={};parcs.filter(function(p){return p.st==='pendente'&&p.venc<todayStr&&parcRest(p)>0.004}).forEach(function(p){var c=parcContexto(p).cli,k=c.id||'?';g[k]=g[k]||{c:c,tot:0,n:0};g[k].tot+=parcRest(p);g[k].n++});
     var ks=Object.keys(g).sort(function(a,b){return g[b].tot-g[a].tot});
     if(!ks.length)return e2R('Honorários vencidos','Ninguém em atraso!','Nenhuma parcela de honorários vencida.');
     var tot=ks.reduce(function(s,k){return s+g[k].tot},0);
     return e2R('Honorários vencidos',ks.length+' cliente(s) em atraso: '+fmtM(tot)+'.',e2Lista(ks,function(k){return'<li><b>'+esc(g[k].c.nome||'Cliente não identificado')+'</b> · '+g[k].n+' parcela(s) · '+fmtM(g[k].tot)+(g[k].c.tel?'':' · <i>sem telefone</i>')+'</li>'}),ks.filter(function(k){return g[k].c.id&&g[k].c.tel}).slice(0,6).map(function(k){return['Cobrar '+primeiroNome(g[k].c.nome),function(){cobrarCliente(k)}]}).concat([['Abrir Honorários',function(){finAba='honorarios';switchTabById('financeiro')}]]));
   }},
-  {id:'mes',func:'marcos',nome:'Resumo do caixa do mês',pal:['resumo','caixa','financeiro','saldo','faturamento','quanto recebi','entradas'],rodar:function(){
-    var ym=todayStr.slice(0,7),f=fins.filter(function(x){return x.ativo!==false&&String(x.data||'').slice(0,7)===ym});
+  {id:'mes',func:'marcos',nome:'Resumo do caixa do mês',pal:['resumo','caixa','financeiro','saldo','balanco do caixa'],periodo:'mes',padrao:function(){var y=+todayStr.slice(0,4),m=+todayStr.slice(5,7);return{ini:e2Iso(y,m,1),fim:e2Iso(y,m,e2UltDia(y,m)),rot:MESES[m-1].toLowerCase()+' de '+y}},rodar:function(arg){
+    var P=e2Per(arg,this),f=fins.filter(function(x){return x.ativo!==false&&e2Entre(x.data,P)});
     var ent=f.filter(function(x){return x.tipo==='receita'}).reduce(function(s,x){return s+(+x.val||0)},0),sai=f.filter(function(x){return x.tipo==='despesa'}).reduce(function(s,x){return s+(+x.val||0)},0);
     var lim=addDays(todayStr,30),arec=parcs.filter(function(p){return p.st==='pendente'&&p.venc>=todayStr&&p.venc<=lim}).reduce(function(s,p){return s+parcRest(p)},0);
     var atr=parcs.filter(function(p){return p.st==='pendente'&&p.venc<todayStr}).reduce(function(s,p){return s+parcRest(p)},0);
-    return e2R('Caixa do mês','Saldo do mês: '+fmtM(ent-sai)+'.','<div class="e2-kpis"><span>Entradas<b style="color:#15803d">'+fmtM(ent)+'</b></span><span>Saídas<b style="color:#b91c1c">'+fmtM(sai)+'</b></span><span>Saldo<b>'+fmtM(ent-sai)+'</b></span><span>A receber 30 dias<b>'+fmtM(arec)+'</b></span>'+(atr?'<span>Em atraso<b style="color:#b91c1c">'+fmtM(atr)+'</b></span>':'')+'</div>',[['Abrir Financeiro',function(){finAba='visao';switchTabById('financeiro')}]]);
+    return e2R('Caixa — '+P.rot,'Saldo de '+P.rot+': '+fmtM(ent-sai)+'.','<div class="e2-kpis"><span>Entradas<b style="color:#15803d">'+fmtM(ent)+'</b></span><span>Saídas<b style="color:#b91c1c">'+fmtM(sai)+'</b></span><span>Saldo<b>'+fmtM(ent-sai)+'</b></span><span>A receber 30 dias<b>'+fmtM(arec)+'</b></span>'+(atr?'<span>Em atraso<b style="color:#b91c1c">'+fmtM(atr)+'</b></span>':'')+'</div>',[['Abrir Financeiro',function(){finAba='visao';switchTabById('financeiro')}]]);
   }},
-  {id:'datajud',func:'beto',nome:'Atualizar andamentos (DataJud)',pal:['andamento','datajud','atualizar processo','atualizar os processo','movimentac'],dur:2,rodar:function(f){
+  {id:'areceber',func:'marcos',nome:'O que vai entrar (15 dias)',pal:['vai entrar','vao entrar','a receber','receber','previsao','previsto','vai cair','vou receber','entrar'],periodo:'futuro',padrao:e2PerFuturo(15),rodar:function(arg){
+    var P=e2Per(arg,this);if(P.ini<todayStr)P.ini=todayStr;
+    var l=parcs.filter(function(p){return p.st==='pendente'&&e2Entre(p.venc,P)&&parcRest(p)>0.004}).map(function(p){var c=parcContexto(p);return{d:p.venc,v:parcRest(p),q:c.cli.nome||c.proc.cli||'Cliente',o:p.desc,pid:p.id}});
+    fins.filter(function(x){return x.ativo!==false&&x.tipo==='receita'&&x.data>todayStr&&e2Entre(x.data,P)&&!x.movId}).forEach(function(x){l.push({d:x.data,v:+x.val||0,q:x.cliNome||x.desc,o:x.cat||'Entrada lançada'})});
+    l.sort(function(a,b){return a.d.localeCompare(b.d)});
+    var tot=l.reduce(function(s,x){return s+x.v},0),atr=parcs.filter(function(p){return p.st==='pendente'&&p.venc<todayStr}).reduce(function(s,p){return s+parcRest(p)},0);
+    if(!l.length)return e2R('A receber — '+P.rot,'Nada previsto para '+P.rot+'.','Nenhuma parcela ou entrada prevista de '+fmt(P.ini)+' a '+fmt(P.fim)+'.'+(atr?' Há '+fmtM(atr)+' em atraso.':''),atr?[['Ver vencidos',function(){e2Pedir('venc')}]]:[]);
+    return e2R('A receber — '+P.rot,'Vai entrar '+fmtM(tot)+' '+e2Em(P.rot)+'.','<div class="e2-kpis"><span>Previsto<b style="color:#15803d">'+fmtM(tot)+'</b></span><span>Lançamentos<b>'+l.length+'</b></span>'+(atr?'<span>Já em atraso<b style="color:#b91c1c">'+fmtM(atr)+'</b></span>':'')+'</div>'+e2Lista(l,function(x){return'<li><b>'+e2Data(x.d)+'</b> · '+esc(x.q)+' · '+fmtM(x.v)+'<span style="color:var(--text3)"> — '+esc(x.o)+'</span></li>'},12),[['Abrir Honorários',function(){finAba='honorarios';switchTabById('financeiro')}]].concat(atr?[['Ver vencidos',function(){e2Pedir('venc')}]]:[]));
+  }},
+  {id:'recebido',func:'marcos',nome:'O que entrou (mês)',pal:['entrou','entraram','recebi','recebido','recebemos','entradas','faturei','faturamento','quanto ganhei'],periodo:'passado',padrao:e2PerMes,rodar:function(arg){
+    var P=e2Per(arg,this),l=fins.filter(function(x){return x.ativo!==false&&x.tipo==='receita'&&e2Entre(x.data,P)&&x.data<=todayStr}).sort(function(a,b){return String(b.data).localeCompare(String(a.data))});
+    if(!l.length)return e2R('Entradas — '+P.rot,'Nada entrou '+e2Em(P.rot)+'.','Nenhuma entrada registrada de '+fmt(P.ini)+' a '+fmt(P.fim)+'.');
+    var tot=l.reduce(function(s,x){return s+(+x.val||0)},0),cats=e2Agrupar(l,function(x){return x.cat||'Outros'},function(x){return+x.val||0});
+    return e2R('Entradas — '+P.rot,'Entrou '+fmtM(tot)+' '+e2Em(P.rot)+'.','<div class="e2-kpis"><span>Total<b style="color:#15803d">'+fmtM(tot)+'</b></span>'+cats.slice(0,4).map(function(c){return'<span>'+esc(c.k)+'<b>'+fmtM(c.v)+'</b></span>'}).join('')+'</div>'+e2Lista(l,function(x){return'<li><b>'+e2Data(x.data)+'</b> · '+esc(x.desc||x.cat)+' · '+fmtM(x.val)+'</li>'},10),[['Abrir Entradas',function(){finAba='entradas';switchTabById('financeiro')}]]);
+  }},
+  {id:'saidas',func:'marcos',nome:'O que saiu (despesas)',pal:['saiu','sairam','saidas','despesa','gastei','gastos','gastamos','paguei','contas pagas','contas a pagar'],periodo:'mes',padrao:function(){var y=+todayStr.slice(0,4),m=+todayStr.slice(5,7);return{ini:e2Iso(y,m,1),fim:e2Iso(y,m,e2UltDia(y,m)),rot:MESES[m-1].toLowerCase()+' de '+y}},rodar:function(arg){
+    var P=e2Per(arg,this),l=fins.filter(function(x){return x.ativo!==false&&x.tipo==='despesa'&&e2Entre(x.data,P)}).sort(function(a,b){return String(b.data).localeCompare(String(a.data))});
+    if(!l.length)return e2R('Saídas — '+P.rot,'Nenhuma saída '+e2Em(P.rot)+'.','Nenhuma despesa registrada de '+fmt(P.ini)+' a '+fmt(P.fim)+'.');
+    var tot=l.reduce(function(s,x){return s+(+x.val||0)},0),cats=e2Agrupar(l,function(x){return x.cat||'Outros'},function(x){return+x.val||0}),fut=l.filter(function(x){return x.data>todayStr});
+    return e2R('Saídas — '+P.rot,'Saiu '+fmtM(tot)+' '+e2Em(P.rot)+'.'+(fut.length?' ('+fut.length+' ainda a pagar)':''),'<div class="e2-kpis"><span>Total<b style="color:#b91c1c">'+fmtM(tot)+'</b></span>'+cats.slice(0,4).map(function(c){return'<span>'+esc(c.k)+'<b>'+fmtM(c.v)+'</b></span>'}).join('')+'</div>'+e2Lista(l,function(x){return'<li><b>'+e2Data(x.data)+'</b> · '+esc(x.desc||x.cat)+' · '+fmtM(x.val)+(x.data>todayStr?' <i>(a pagar)</i>':'')+'</li>'},10),[['Abrir Saídas',function(){finAba='saidas';switchTabById('financeiro')}]]);
+  }},
+  {id:'agenda',func:'lucia',nome:'Agenda (7 dias)',pal:['agenda','compromisso','agendado','marcado','o que tenho'],periodo:'futuro',padrao:e2PerFuturo(7),rodar:function(arg){
+    var P=e2Per(arg,this),l=agItens(P.ini,P.fim,false);
+    if(!l.length)return e2R('Agenda — '+P.rot,'Agenda livre '+e2Em(P.rot)+'.','Nada marcado de '+fmt(P.ini)+' a '+fmt(P.fim)+'.');
+    return e2R('Agenda — '+P.rot,l.length+' item(ns) na agenda '+e2Em(P.rot)+'.',e2Lista(l,function(e){return'<li><b>'+e2Data(e.data)+(e.hora?' '+esc(e.hora):'')+'</b> · '+esc(e.titulo)+(e.sub?'<span style="color:var(--text3)"> — '+esc(e.sub)+'</span>':'')+'</li>'},14),[['Abrir Agenda',function(){switchTabById('agenda')}]]);
+  }},
+  {id:'intrec',func:'davi',nome:'Intimações recebidas (7 dias)',pal:['intimacoes recebidas','intimacoes que chegaram','chegou de intim','publicacoes recebidas','intimacoes da semana','intimacoes do mes'],periodo:'passado',padrao:function(){return{ini:addDays(todayStr,-6),fim:todayStr,rot:'últimos 7 dias'}},rodar:function(arg){
+    var P=e2Per(arg,this),l=intims.filter(function(i){return e2Entre(i.data||i.dataPub||String(i.criadoEm||'').slice(0,10),P)}).sort(function(a,b){return String(b.data||'').localeCompare(String(a.data||''))});
+    if(!l.length)return e2R('Intimações — '+P.rot,'Nenhuma intimação '+e2Em(P.rot)+'.','Nenhuma intimação recebida de '+fmt(P.ini)+' a '+fmt(P.fim)+'.');
+    var pend=l.filter(function(i){return i.st==='pendente'}).length;
+    return e2R('Intimações — '+P.rot,l.length+' intimação(ões) '+e2Em(P.rot)+(pend?', '+pend+' pendente(s)':'')+'.',e2Lista(l,function(i){var p=agProc(i.procId);return'<li><b>'+e2Data(i.data)+'</b> · '+esc(p.cli||i.numProc||'Processo')+(i.tipoCom?' — '+esc(i.tipoCom):'')+(i.st==='pendente'?' <i>(pendente)</i>':'')+'</li>'},10),[['Abrir Intimações',function(){switchTabById('intimacoes')}]]);
+  }},
+  {id:'clinovos',func:'rita',nome:'Clientes novos (mês)',pal:['clientes novos','novos clientes','clientes cadastrados','quantos clientes','clientes entraram'],periodo:'passado',padrao:e2PerMes,rodar:function(arg){
+    var P=e2Per(arg,this),l=clientes.filter(function(c){return e2Entre(String(c.criadoEm||'').slice(0,10),P)}),orig=e2Agrupar(l,function(c){return c.origem||'Não informado'},function(){return 1});
+    if(!l.length)return e2R('Clientes novos — '+P.rot,'Nenhum cliente novo '+e2Em(P.rot)+'.','Nenhum cliente cadastrado de '+fmt(P.ini)+' a '+fmt(P.fim)+'.'+(clientes.some(function(c){return!c.criadoEm})?' (Clientes antigos sem data de cadastro não entram na conta.)':''));
+    return e2R('Clientes novos — '+P.rot,l.length+' cliente(s) novo(s) '+e2Em(P.rot)+'.','<div class="e2-kpis">'+orig.slice(0,4).map(function(o){return'<span>'+esc(o.k)+'<b>'+o.n+'</b></span>'}).join('')+'</div>'+e2Lista(l,function(c){return'<li><a onclick="abrirFichaCliente(\''+c.id+'\')"><b>'+esc(c.nome)+'</b></a>'+(c.origem?' · '+esc(c.origem):'')+'</li>'}),[['Abrir Clientes',function(){switchTabById('clientes')}]]);
+  }},
+  {id:'procmov',func:'beto',nome:'Processos novos e encerrados (mês)',pal:['processos novos','novos processos','processos abertos','processos encerrados','encerrad','quantos processos'],periodo:'passado',padrao:e2PerMes,rodar:function(arg){
+    var P=e2Per(arg,this),nov=procs.filter(function(p){return e2Entre(p.ab,P)}),enc=procs.filter(function(p){return e2Entre(p.encerradoEm,P)}),at=procs.filter(function(p){return p.st!=='Arquivado'&&p.st!=='Concluído'}).length;
+    var porArea=e2Agrupar(nov,function(p){return p.area||'—'},function(){return 1});
+    return e2R('Processos — '+P.rot,nov.length+' novo(s) e '+enc.length+' encerrado(s) '+e2Em(P.rot)+'.','<div class="e2-kpis"><span>Ativos hoje<b>'+at+'</b></span><span>Novos<b>'+nov.length+'</b></span><span>Encerrados<b>'+enc.length+'</b></span>'+porArea.slice(0,3).map(function(a){return'<span>'+esc(a.k)+'<b>'+a.n+'</b></span>'}).join('')+'</div>'+(nov.length?e2Lista(nov,function(p){return'<li><a onclick="openPanel(\''+p.id+'\')"><b>'+esc(p.cli)+'</b></a> · '+esc(p.tipoAcao||p.area||'')+'</li>'}):''),[['Abrir Processos',function(){switchTabById('processos')}]]);
+  }},
+  {id:'horas',func:'sonia',nome:'Horas trabalhadas (mês)',pal:['horas','trabalhad','produtividade'],periodo:'passado',padrao:e2PerMes,rodar:function(arg){
+    var P=e2Per(arg,this),l=horas.filter(function(h){return e2Entre(h.data,P)});
+    if(!l.length)return e2R('Horas — '+P.rot,'Nenhuma hora lançada '+e2Em(P.rot)+'.','Nenhum registro de horas de '+fmt(P.ini)+' a '+fmt(P.fim)+'.');
+    var tot=l.reduce(function(s,h){return s+(+h.horas||0)},0),pa=e2Agrupar(l,function(h){return respCanon(h.adv)||'—'},function(h){return+h.horas||0});
+    return e2R('Horas — '+P.rot,hFmt(tot)+' h trabalhadas '+e2Em(P.rot)+'.','<div class="e2-kpis"><span>Total<b>'+hFmt(tot)+' h</b></span>'+pa.slice(0,4).map(function(a){return'<span>'+esc(a.k)+'<b>'+hFmt(a.v)+' h</b></span>'}).join('')+'</div>',[['Abrir Horas',function(){switchTabById('horas')}]]);
+  }},
+  {id:'ajuda',func:'sonia',nome:'O que a equipe sabe fazer',pal:['ajuda','o que voce','o que voces','o que sabem','comandos','exemplos'],rodar:function(){
+    var ex=['o que vai entrar nos próximos 15 dias','o que entrou este mês','o que saiu em outubro','caixa do mês passado','prazos da próxima semana','audiências do mês','agenda de amanhã','intimações recebidas nos últimos 30 dias','clientes novos este mês','processos novos este ano','horas trabalhadas no mês','tarefa: ligar para Maria amanhã'];
+    return e2R('O que a equipe sabe fazer','Veja os exemplos!','Escreva do seu jeito, com o período que quiser (hoje, amanhã, semana, mês, mês passado, nome do mês, "próximos 15 dias", "01/11 a 15/11"). Exemplos:'+e2Lista(ex,function(x){return'<li><a onclick="e2Comando(\''+x.replace(/'/g,'')+'\')">'+esc(x)+'</a></li>'},20));
+  }},
+  {id:'datajud',func:'beto',nome:'Atualizar andamentos (DataJud)',pal:['atualizar andamento','andamento','datajud','atualizar processo','atualizar os processo','movimentac'],dur:2,rodar:function(arg,f){
     var l=procs.filter(function(p){return p.st!=='Arquivado'&&p.st!=='Concluído'&&soDigitos(p.num).length===20});
     if(!l.length)return e2R('Andamentos','Nenhum processo com número CNJ.','Não há processos ativos com número CNJ completo para consultar.');
     var novos=0,achou=0,erros=0,det=[],i=0;
@@ -6393,10 +6445,41 @@ var E2_TAREFAS=[
   }}
 ];
 function e2Tarefa(id){return E2_TAREFAS.filter(function(t){return t.id===id})[0]}
+
+// ---------- período dito no pedido ("próximos 15 dias", "este mês", "mês passado", "outubro", "01/11 a 15/11") ----------
+var E2_MESES=['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function e2Iso(y,m,d){return y+'-'+('0'+m).slice(-2)+'-'+('0'+d).slice(-2)}
+function e2UltDia(y,m){return new Date(y,m,0).getDate()}
+function e2Periodo(t,tipo,padrao){
+  t=normTxt(t||'');var hoje=todayStr,y=+hoje.slice(0,4),m=+hoje.slice(5,7),r=null,n;
+  var mm=t.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*(?:a|ate|-)\s*(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+  if(mm){var y1=mm[3]?(mm[3].length===2?'20'+mm[3]:mm[3]):y,y2=mm[6]?(mm[6].length===2?'20'+mm[6]:mm[6]):y1;r={ini:e2Iso(y1,+mm[2],+mm[1]),fim:e2Iso(y2,+mm[5],+mm[4])};r.rot=fmt(r.ini)+' a '+fmt(r.fim);return r}
+  if((n=t.match(/(?:proximos|proximas|nos proximos|dentro de|em|daqui a)\s+(\d{1,3})\s+dias?/)))return{ini:hoje,fim:addDays(hoje,+n[1]),rot:'próximos '+n[1]+' dias'};
+  if((n=t.match(/(?:ultimos|ultimas|nos ultimos|ha)\s+(\d{1,3})\s+dias?/)))return{ini:addDays(hoje,-(+n[1])),fim:hoje,rot:'últimos '+n[1]+' dias'};
+  if(/\bhoje\b/.test(t))return{ini:hoje,fim:hoje,rot:'hoje'};
+  if(/depois de amanha/.test(t)){var d2=addDays(hoje,2);return{ini:d2,fim:d2,rot:fmt(d2)}}
+  if(/amanha/.test(t)){var d1=addDays(hoje,1);return{ini:d1,fim:d1,rot:'amanhã'}}
+  if(/\bontem\b/.test(t)){var d0=addDays(hoje,-1);return{ini:d0,fim:d0,rot:'ontem'}}
+  if(/semana passada/.test(t))return{ini:addDays(hoje,-7),fim:addDays(hoje,-1),rot:'últimos 7 dias'};
+  if(/proxima semana|semana que vem/.test(t))return{ini:addDays(hoje,1),fim:addDays(hoje,7),rot:'próximos 7 dias'};
+  if(/\bsemana\b/.test(t))return tipo==='passado'?{ini:addDays(hoje,-6),fim:hoje,rot:'últimos 7 dias'}:{ini:hoje,fim:addDays(hoje,7),rot:'próximos 7 dias'};
+  if(/mes passado|ultimo mes/.test(t)){var pm=m===1?12:m-1,py=m===1?y-1:y;return{ini:e2Iso(py,pm,1),fim:e2Iso(py,pm,e2UltDia(py,pm)),rot:MESES[pm-1].toLowerCase()+' de '+py}}
+  if(/proximo mes|mes que vem/.test(t)){var nm=m===12?1:m+1,ny=m===12?y+1:y;return{ini:e2Iso(ny,nm,1),fim:e2Iso(ny,nm,e2UltDia(ny,nm)),rot:MESES[nm-1].toLowerCase()+' de '+ny}}
+  for(var i=0;i<12;i++){if(new RegExp('\\b'+E2_MESES[i]+'\\b').test(t)){var my=y;if(tipo==='passado'&&i+1>m)my=y-1;if(tipo==='futuro'&&i+1<m)my=y+1;return{ini:e2Iso(my,i+1,1),fim:e2Iso(my,i+1,e2UltDia(my,i+1)),rot:MESES[i].toLowerCase()+' de '+my}}}
+  if(/\b(este|esse|neste|nesse|do|no)\s+mes\b|\bmes\b/.test(t))return tipo==='futuro'?{ini:hoje,fim:e2Iso(y,m,e2UltDia(y,m)),rot:'até o fim do mês'}:{ini:e2Iso(y,m,1),fim:tipo==='passado'?hoje:e2Iso(y,m,e2UltDia(y,m)),rot:MESES[m-1].toLowerCase()+' de '+y};
+  if(/\bano\b/.test(t))return tipo==='futuro'?{ini:hoje,fim:e2Iso(y,12,31),rot:'até o fim do ano'}:{ini:e2Iso(y,1,1),fim:hoje,rot:'este ano'};
+  return padrao?padrao():null;
+}
+function e2PerFuturo(n){return function(){return{ini:todayStr,fim:addDays(todayStr,n),rot:'próximos '+n+' dias'}}}
+function e2PerMes(){var y=+todayStr.slice(0,4),m=+todayStr.slice(5,7);return{ini:e2Iso(y,m,1),fim:todayStr,rot:MESES[m-1].toLowerCase()+' de '+y}}
+function e2Per(arg,t){return(arg&&arg.per)||(t.periodo?e2Periodo('',t.periodo,t.padrao):null)}
+function e2Em(r){r=String(r||'');if(/^(próximos|últimos)/.test(r))return'nos '+r;if(/^(hoje|amanhã|ontem|até|este ano)/.test(r))return r;return'em '+r}
+function e2Entre(d,p){return d&&d>=p.ini&&d<=p.fim}
+function e2Agrupar(l,kf,vf){var g={};l.forEach(function(x){var k=kf(x);g[k]=g[k]||{k:k,v:0,n:0};g[k].v+=vf(x);g[k].n++});return Object.keys(g).map(function(k){return g[k]}).sort(function(a,b){return b.v-a.v})}
 // ---------- pedidos ----------
 function e2Pedir(id,arg){
   e2Init();var t=e2Tarefa(id);if(!t)return false;var f=e2Func(t.func);
-  if(f.tarefa&&f.tarefa.id===id&&!arg||f.fila.some(function(x){return x.t.id===id&&!arg})){e2Balao(f,'Já estou nessa!');return true}
+  if(!arg&&(f.tarefa&&f.tarefa.id===id||f.fila.some(function(x){return x.t.id===id&&!x.arg}))){e2Balao(f,'Já estou nessa!');return true}
   f.fila.push({t:t,arg:arg});e2Balao(f,f.estado==='parado'?'Deixa comigo!':'Na fila: '+t.nome);
   e2Garantir();e2Equipe();return true;
 }
@@ -6425,7 +6508,7 @@ function e2Iniciar(f){
   var sala=e2Sala(f.sala),est=E2_PONTOS[f.sala].est;f.estado='indo';
   e2Ir(f,e2Rota(f,est,sala),function(){
     f.estado='trabalhando';f.ini=E2.t;f.dur=E2.semCtx?0:(it.t.dur||1.4);
-    var r;try{r=it.t.rodar.call(it.t,it.arg&&it.arg.titulo!==undefined?it.arg:f)}catch(e){r=Promise.reject(e)}
+    var r;try{r=it.t.rodar.call(it.t,it.arg||{},f)}catch(e){r=Promise.reject(e)}
     Promise.resolve(r).then(function(x){f.res=x||e2R(it.t.nome,'Pronto!','')},function(e){f.res=e2R(it.t.nome,'Deu erro…','<span style="color:#b91c1c">'+esc((e&&e.message)||String(e))+'</span>');f.res.erro=true});
   });
 }
@@ -6490,7 +6573,7 @@ function e2Comando(txt){
   t.split(/\s+e\s+|,|;|\s+tambem\s+/).forEach(function(parte){
     parte=parte.trim();if(!parte)return;var melhor=null,pts=0;
     E2_TAREFAS.forEach(function(tf){tf.pal.forEach(function(p){if(parte.indexOf(p)>-1&&p.length>pts){pts=p.length;melhor=tf}})});
-    if(melhor&&feitos.indexOf(melhor.id)<0){feitos.push(melhor.id);e2Pedir(melhor.id)}
+    if(melhor&&feitos.indexOf(melhor.id)<0){feitos.push(melhor.id);var per=melhor.periodo?e2Periodo(parte,melhor.periodo==='mes'?'mes':melhor.periodo,null):null;e2Pedir(melhor.id,per?{per:per}:undefined)}
   });
   if(!feitos.length){var s=e2Func('sonia');e2Balao(s,'Não entendi. Tente: "checar intimações", "prazos da semana", "cobrar vencidos", "tarefa: ligar para Maria amanhã".',5);e2Garantir()}
   return feitos;
@@ -6500,9 +6583,9 @@ function e2Enviar(){var i=document.getElementById('e2-cmd');if(!i)return;var r=e
 function renderEscritorio2D(){
   e2Init();
   if(!document.getElementById('e2-fonte')){var l=document.createElement('link');l.id='e2-fonte';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';document.head.appendChild(l)}
-  var sug=[['Rotina do dia','rotina'],['Checar intimações','checar intimações'],['Prazos da semana','prazos da semana'],['Audiências','audiências'],['Cobrar vencidos','cobrar vencidos'],['Aniversariantes','aniversariantes'],['Atualizar andamentos','atualizar andamentos'],['Relatório do mês','relatório do mês']];
+  var sug=[['Rotina do dia','rotina'],['O que vai entrar em 15 dias','o que vai entrar nos próximos 15 dias'],['O que entrou no mês','o que entrou este mês'],['Checar intimações','checar intimações'],['Prazos da semana','prazos da semana'],['Audiências','audiências'],['Cobrar vencidos','cobrar vencidos'],['Aniversariantes','aniversariantes'],['Atualizar andamentos','atualizar andamentos'],['Relatório do mês','relatório do mês'],['O que vocês sabem fazer?','ajuda']];
   document.getElementById('tab-content').innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-device-gamepad-2"></i></div><h2>Escritório 2D</h2></div><div style="font-size:12px;color:var(--text3)">Clique num funcionário ou escreva o pedido. Ele vai ao setor, faz e traz o resultado.</div></div>'+
-    '<div class="e2-cmd"><i class="ti ti-message-chatbot"></i><input id="e2-cmd" placeholder="Peça à equipe: checar intimações e cobrar vencidos · tarefa: ligar para Maria amanhã" onkeydown="if(event.key===\'Enter\')e2Enviar()" autocomplete="off"><button class="btn bp" onclick="e2Enviar()"><i class="ti ti-send"></i> Pedir</button></div>'+
+    '<div class="e2-cmd"><i class="ti ti-message-chatbot"></i><input id="e2-cmd" placeholder="Pergunte à equipe: o que vai entrar nos próximos 15 dias? · o que entrou em outubro? · tarefa: ligar para Maria amanhã" onkeydown="if(event.key===\'Enter\')e2Enviar()" autocomplete="off"><button class="btn bp" onclick="e2Enviar()"><i class="ti ti-send"></i> Pedir</button></div>'+
     '<div class="e2-sug">'+sug.map(function(x){return'<button onclick="e2Comando(\''+x[1]+'\')">'+esc(x[0])+'</button>'}).join('')+'</div>'+
     '<div class="e2-grid"><div class="e2-mapa-w"><div class="e2-mapa" id="e2-mapa"><canvas id="e2-cv" width="'+(E2_W*E2_ESC)+'" height="'+(E2_H*E2_ESC)+'" onclick="e2Clique(event)" onmousemove="e2Hover(event)"></canvas><div id="e2-ov"></div><div id="e2-menu" class="e2-menu hidden"></div></div><div class="e2-equipe" id="e2-equipe"></div></div>'+
     '<div class="e2-lado"><div class="e2-lado-h"><i class="ti ti-clipboard-list"></i> Entregas da equipe</div><div id="e2-log" class="e2-log"></div></div></div>';
