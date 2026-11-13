@@ -6324,7 +6324,7 @@ var E2_TAREFAS=[
     return djenColetar(oabs,ini,todayStr).then(function(res){
       var novas=res.filter(function(r){return!intims.some(function(x){return x.djenId===r.djenId})});novas.forEach(function(r){djenAplicar(r)});
       lsSet('gt_djen_ultima',todayStr);lsSet('gt_djen_auto_dia',todayStr);lsSet('gt_djen_auto_em',new Date().toISOString());if(novas.length)saveAll();
-      return e2R('Publicações do DJEN',novas.length?novas.length+' publicação(ões) nova(s)!':'Nenhuma publicação nova.',novas.length?'Importei '+novas.length+' publicação(ões) de '+fmt(ini)+' a hoje, já com prazo estimado. Confira os prazos.':'Procurei de '+fmt(ini)+' até hoje nas OABs '+esc(oabs.map(function(o){return o.num+'/'+o.uf}).join(', '))+' e não há nada novo.',novas.length?[['Ver intimações',function(){switchTabById('intimacoes')}]]:[]);
+      return e2R('Publicações do DJEN',novas.length?novas.length+' publicação(ões) nova(s)!':'Nenhuma publicação nova.',novas.length?'Importei '+novas.length+' publicação(ões) de '+fmt(ini)+' a hoje, já com prazo estimado. Confira os prazos.':'Procurei de '+fmt(ini)+' até hoje nas OABs '+esc(oabs.map(function(o){return o.n+'/'+o.uf}).join(', '))+' e não há nada novo.',novas.length?[['Ver intimações',function(){switchTabById('intimacoes')}]]:[]);
     });
   }},
   {id:'intpend',func:'davi',nome:'Intimações pendentes',pal:['intimacoes pendentes','intimacao pendente','quais intim','listar intim','intimacoes em aberto'],rodar:function(){
