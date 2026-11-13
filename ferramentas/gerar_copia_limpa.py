@@ -34,7 +34,7 @@ rep('<span>Guerra & Torres</span>', '<span>CRM Jurídico</span>')
 # --- nuvem e contas ---
 rep_re(r"var SB_URL_FIXA='[^']*', SB_KEY_FIXA='[^']*';", "var SB_URL_FIXA='', SB_KEY_FIXA='';")
 rep("var GOOGLE_CONTA_PADRAO='guerraetorresadvocacia@gmail.com';", "var GOOGLE_CONTA_PADRAO='';")
-rep("'53087/GO, 72570/GO'", "''", 2)
+rep("'53087/GO, 72570/GO'", "''", 3)
 rep('placeholder="53087/GO, 72570/GO"', 'placeholder="00000/UF, 00000/UF"')
 rep("'Informe ao menos uma OAB no formato 53087/GO.'", "'Informe ao menos uma OAB no formato 00000/UF.'")
 
