@@ -684,6 +684,20 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 <div class="mf"><button class="btn bo" onclick="closeModal('mFin')">Cancelar</button><button class="btn bp" id="ff-salvar" onclick="saveFin()"><i class="ti ti-check"></i> Salvar</button></div>
 </div></div>
 
+<div id="mHonAv" class="overlay hidden" onclick="if(event.target.id==='mHonAv')closeModal('mHonAv')">
+<div class="modal" style="max-width:560px"><div class="mh"><h2 id="mHonAvT">Honorários sem processo</h2><button class="btn bo bs" onclick="closeModal('mHonAv')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div style="font-size:12px;color:var(--text2);background:var(--cream);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;line-height:1.6">Para serviços que não viraram processo: consulta, contrato, requerimento ao INSS, acordo extrajudicial, assessoria. A conta funciona igual à de um processo: parcelas, pagamentos parciais, descontos e recibo.</div>
+<div class="fg">
+  <div class="fgr full"><label>Cliente *</label><input id="fhv-cli" placeholder="Nome ou CPF do cliente…"><div class="ac-hint" id="fhv-cli-hint"></div></div>
+  <div class="fgr full"><label>Serviço *</label><input id="fhv-serv" list="dl-hon-serv" placeholder="Escolha ou escreva: consulta, contrato, requerimento ao INSS…" autocomplete="off"><datalist id="dl-hon-serv"></datalist></div>
+  <div class="fgr"><label>Valor combinado (R$) *</label><input id="fhv-val" inputmode="decimal" placeholder="0,00"><div class="ac-hint" id="fhv-val-hint"></div></div>
+  <div class="fgr"><label>Data do serviço / contrato</label><input type="date" id="fhv-data"></div>
+  <div class="fgr full" id="fhv-parc-box"><label>Pagamento</label><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input type="number" id="fhv-n" min="1" step="1" value="1" style="width:90px" title="Nº de parcelas"><span style="font-size:12px;color:var(--text3)">parcela(s), 1º vencimento</span><input type="date" id="fhv-v1" style="flex:1;min-width:140px"></div>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:600;cursor:pointer"><input type="checkbox" id="fhv-pago" style="width:auto"> Já recebi o valor todo (lança em Entradas)</label></div>
+  <div class="fgr full"><label>Observações</label><input id="fhv-obs" placeholder="Ex.: honorários do requerimento de BPC; 30% do retroativo à parte"></div>
+</div></div>
+<div class="mf"><button class="btn bo" onclick="closeModal('mHonAv')">Cancelar</button><button class="btn bp" onclick="saveHonAvulso()"><i class="ti ti-check"></i> Salvar</button></div>
+</div></div>
 <div id="mHon" class="overlay hidden" onclick="if(event.target.id==='mHon')closeModal('mHon')">
 <div class="modal" style="max-width:500px"><div class="mh"><h2 id="mHonT">Pagamento recebido</h2><button class="btn bo bs" onclick="closeModal('mHon')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
 <div class="mb"><div id="mHon-ctx" style="font-size:12px;color:var(--text2);background:var(--cream);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;line-height:1.6"></div>
@@ -1390,11 +1404,13 @@ function selComBusca(selId,lista,val,vazio){
   b.value='';b.oninput=function(){montar(b.value)};
   montar('');if(val)s.value=val;
 }
-function procOpcoes(){
-  return procs.filter(function(p){return p.st!=='Arquivado'}).map(function(p){
+function procOpcoes(semAvulsos){
+  var l=procs.filter(function(p){return p.st!=='Arquivado'}).map(function(p){
     var c=cliDoProc(p);
     return{v:p.id,t:p.cli+(p.num?' — '+p.num:'')+(p.area?' ('+p.area+')':''),busca:normTxt([p.cli,p.num,p.area,c&&c.doc].join(' ')),dig:soDigitos(p.num)+'|'+soDigitos(c&&c.doc)};
   });
+  if(!semAvulsos&&typeof honAvulsos!=='undefined'&&window._procOpcoesComAvulsos)honAvulsos.forEach(function(a){var c=cliDoProc(a);l.push({v:a.id,t:a.cli+' — '+(a.tipoAcao||'honorários')+' (sem processo)',busca:normTxt([a.cli,a.tipoAcao,c&&c.doc].join(' ')),dig:'|'+soDigitos(c&&c.doc)})});
+  return l;
 }
 function cliOpcoes(){
   return clientes.map(function(c){return{v:c.id,t:c.nome+(c.doc?' — '+fmtDoc(c.doc):''),busca:normTxt(c.nome+' '+(c.doc||'')),dig:soDigitos(c.doc)}}).sort(function(a,b){return a.t.localeCompare(b.t)});
@@ -1615,7 +1631,7 @@ function cliEndereco(c){c=c||{};var e=String(c.end||'').trim(),k=String(c.compl|
   var m=e.match(/(n[º°o.]?\s*\d+[A-Za-z]?|s\/\s*n[º°o]?)/i);if(m){var i=m.index+m[0].length;return e.slice(0,i)+', '+k+e.slice(i)}return e+', '+k}
 function cliChecaDuplicado(){var d=soDigitos(document.getElementById('fc-doc').value),h=document.getElementById('fc-doc-hint');if(!h)return null;var dup=d.length>=11?clientes.filter(function(c){return c.id!==editIds.cli&&soDigitos(c.doc)===d})[0]:null;h.innerHTML=dup?'<span style="color:#b91c1c"><i class="ti ti-alert-triangle"></i> Já cadastrado: '+esc(dup.nome)+'</span>':(d&&d.length!==11&&d.length!==14?'<span style="color:#b45309">'+(cliTipoAtual()==='PJ'?'CNPJ tem 14 números':'CPF tem 11 números')+'</span>':(d.length===11&&!cpfValido(d)?'<span style="color:#b45309"><i class="ti ti-alert-triangle"></i> CPF inválido (dígito verificador). Confira.</span>':(d.length===14&&!cnpjValido(d)?'<span style="color:#b45309"><i class="ti ti-alert-triangle"></i> CNPJ inválido (dígito verificador). Confira.</span>':'')));return dup}
 function openCliModal(id){cliRapidoAlvo=null;editIds.cli=id||null;var c=id?clientes.filter(function(x){return x.id===id})[0]:{};document.getElementById('mCliT').textContent=id?'Editar cliente':'Novo cliente';['nome','doc','tel','email','end','compl','cid','cep','obs','rg','nac','civil','prof'].forEach(function(k){document.getElementById('fc-'+k).value=c[k]||''});document.getElementById('fc-uf').value=c.uf||'';document.getElementById('fc-vh').value=c.valorHora?numBR(c.valorHora):'';document.getElementById('fc-drive').value=(c.drive&&c.drive.link)||c.driveLink||'';var ch=document.getElementById('fc-cep-hint');if(ch)ch.innerHTML=cepHintPadrao();_cepUlt='';var tp=c.tipo||(soDigitos(c.doc).length===14?'Pessoa Jurídica':'Pessoa Física');cliTipoMudou(tp,true);document.getElementById('fc-tel').value=c.tel?mascaraTel(telCompletar(c.tel)):'';var _th=document.getElementById('fc-tel-hint');if(_th)_th.innerHTML='';document.getElementById('fc-aniv').value=c.aniv||'';cliOrigemSet(c.origem);var hh=document.getElementById('fc-doc-hint');if(hh)hh.innerHTML='';openModal('mCliente')}
-function saveCliente(){var nome=document.getElementById('fc-nome').value.trim();if(!nome){alert('Nome obrigatório.');return}var fe=document.getElementById('fc-end');if(/nº\s*(,|$)/.test(fe.value)){if(!confirm('Falta o número no endereço. Salvar como "s/nº"?')){fe.focus();return}fe.value=fe.value.replace(/nº\s*(,|$)/,'s/nº$1')}var dup=cliChecaDuplicado();if(dup&&!confirm('Já existe um cliente com este CPF/CNPJ: '+dup.nome+'.\nSalvar mesmo assim?'))return;var _dd=soDigitos(document.getElementById('fc-doc').value);var o={id:editIds.cli||uid(),nome:nome,doc:(_dd.length===11||_dd.length===14)?fmtDoc(_dd):document.getElementById('fc-doc').value.trim(),tipo:document.getElementById('fc-tipo').value,tel:mascaraTel(telCompletar(document.getElementById('fc-tel').value.trim()))||document.getElementById('fc-tel').value.trim(),email:document.getElementById('fc-email').value.trim(),end:document.getElementById('fc-end').value.trim(),compl:document.getElementById('fc-compl').value.trim(),cid:document.getElementById('fc-cid').value.trim(),cep:document.getElementById('fc-cep').value.trim(),uf:document.getElementById('fc-uf').value,rg:document.getElementById('fc-rg').value.trim(),nac:document.getElementById('fc-nac').value.trim(),civil:document.getElementById('fc-civil').value.trim(),prof:document.getElementById('fc-prof').value.trim(),valorHora:lerValorBR(document.getElementById('fc-vh').value)||0,driveLink:(function(v){return/^https?:\/\//.test(v)?v:''})(document.getElementById('fc-drive').value.trim()),aniv:document.getElementById('fc-aniv').value,origem:cliOrigemGet(),obs:document.getElementById('fc-obs').value.trim()};var nomeAntigo=null;if(editIds.cli){var i=clientes.findIndex(function(x){return x.id===editIds.cli});nomeAntigo=clientes[i].nome;clientes[i]=Object.assign({},clientes[i],o)}else clientes.unshift(o);if(nomeAntigo&&nomeAntigo!==o.nome)procs.forEach(function(p){if(p.cliId===o.id||p.cli===nomeAntigo){p.cli=o.nome;p.cliId=o.id}});saveAll();closeModal('mCliente');toast('Cliente salvo!','ok');gdrAposSalvarCliente(cliPorId(o.id));if(cliRapidoAlvo){var inp=document.getElementById(cliRapidoAlvo);inp.value=o.nome;inp.dataset.cliId=o.id;if(/^kb-cli-/.test(cliRapidoAlvo)){var _col=cliRapidoAlvo.slice(7);cliRapidoAlvo=null;kbAddCliSalvar(_col);renderStats();return}if(cliRapidoAlvo==='fp-cli'){if(!document.getElementById('fp-cid').value&&o.cid)document.getElementById('fp-cid').value=o.cid;procCliHint()}cliRapidoAlvo=null;renderStats();return}renderClientes();renderStats()}
+function saveCliente(){var nome=document.getElementById('fc-nome').value.trim();if(!nome){alert('Nome obrigatório.');return}var fe=document.getElementById('fc-end');if(/nº\s*(,|$)/.test(fe.value)){if(!confirm('Falta o número no endereço. Salvar como "s/nº"?')){fe.focus();return}fe.value=fe.value.replace(/nº\s*(,|$)/,'s/nº$1')}var dup=cliChecaDuplicado();if(dup&&!confirm('Já existe um cliente com este CPF/CNPJ: '+dup.nome+'.\nSalvar mesmo assim?'))return;var _dd=soDigitos(document.getElementById('fc-doc').value);var o={id:editIds.cli||uid(),nome:nome,doc:(_dd.length===11||_dd.length===14)?fmtDoc(_dd):document.getElementById('fc-doc').value.trim(),tipo:document.getElementById('fc-tipo').value,tel:mascaraTel(telCompletar(document.getElementById('fc-tel').value.trim()))||document.getElementById('fc-tel').value.trim(),email:document.getElementById('fc-email').value.trim(),end:document.getElementById('fc-end').value.trim(),compl:document.getElementById('fc-compl').value.trim(),cid:document.getElementById('fc-cid').value.trim(),cep:document.getElementById('fc-cep').value.trim(),uf:document.getElementById('fc-uf').value,rg:document.getElementById('fc-rg').value.trim(),nac:document.getElementById('fc-nac').value.trim(),civil:document.getElementById('fc-civil').value.trim(),prof:document.getElementById('fc-prof').value.trim(),valorHora:lerValorBR(document.getElementById('fc-vh').value)||0,driveLink:(function(v){return/^https?:\/\//.test(v)?v:''})(document.getElementById('fc-drive').value.trim()),aniv:document.getElementById('fc-aniv').value,origem:cliOrigemGet(),obs:document.getElementById('fc-obs').value.trim()};var nomeAntigo=null;if(editIds.cli){var i=clientes.findIndex(function(x){return x.id===editIds.cli});nomeAntigo=clientes[i].nome;clientes[i]=Object.assign({},clientes[i],o)}else clientes.unshift(o);if(nomeAntigo&&nomeAntigo!==o.nome)procs.forEach(function(p){if(p.cliId===o.id||p.cli===nomeAntigo){p.cli=o.nome;p.cliId=o.id}});saveAll();closeModal('mCliente');toast('Cliente salvo!','ok');gdrAposSalvarCliente(cliPorId(o.id));if(cliRapidoAlvo){var inp=document.getElementById(cliRapidoAlvo);inp.value=o.nome;inp.dataset.cliId=o.id;if(cliRapidoAlvo==='fhv-cli'){cliRapidoAlvo=null;honAvHint();renderStats();return}if(/^kb-cli-/.test(cliRapidoAlvo)){var _col=cliRapidoAlvo.slice(7);cliRapidoAlvo=null;kbAddCliSalvar(_col);renderStats();return}if(cliRapidoAlvo==='fp-cli'){if(!document.getElementById('fp-cid').value&&o.cid)document.getElementById('fp-cid').value=o.cid;procCliHint()}cliRapidoAlvo=null;renderStats();return}renderClientes();renderStats()}
 function delCli(id){if(!confirm('Excluir cliente?'))return;clientes=clientes.filter(function(x){return x.id!==id});saveAll();renderClientes();renderStats()}
 
 // ANEXOS DO CLIENTE
@@ -2486,7 +2502,7 @@ function renderFinanceiro(){
   var corpo=document.getElementById('fin-corpo');
   if(finAba==='entradas')corpo.innerHTML=finListaHtml('receita',key);
   else if(finAba==='saidas')corpo.innerHTML=finListaHtml('despesa',key);
-  else if(finAba==='honorarios')corpo.innerHTML=inadimplenciaHtml()+'<div class="fin-ajuda"><i class="ti ti-info-circle"></i> Cada processo tem a sua conta: valor combinado, parcelas, pagamentos (inclusive parciais), descontos e acréscimos. Todo pagamento registrado aqui entra sozinho em <b>Entradas</b>; se excluir ou corrigir a entrada lá, a conta do cliente acompanha.</div><div class="card"><div class="card-header"><h3><i class="ti ti-calendar-dollar"></i> Honorários por processo</h3><button class="btn bp bs" onclick="openParcModal()"><i class="ti ti-plus"></i> Nova parcela</button></div><div style="padding:16px">'+finHonorariosHtml()+'</div></div>';
+  else if(finAba==='honorarios')corpo.innerHTML=inadimplenciaHtml()+'<div class="fin-ajuda"><i class="ti ti-info-circle"></i> Cada processo (ou serviço sem processo) tem a sua conta: valor combinado, parcelas, pagamentos (inclusive parciais), descontos e acréscimos. Todo pagamento registrado aqui entra sozinho em <b>Entradas</b>; se excluir ou corrigir a entrada lá, a conta do cliente acompanha.</div><div class="card"><div class="card-header"><h3><i class="ti ti-calendar-dollar"></i> Honorários a receber</h3><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bp bs" onclick="openHonAvulso()"><i class="ti ti-plus"></i> Honorários sem processo</button><button class="btn bo bs" onclick="openParcModal()"><i class="ti ti-calendar-plus"></i> Nova parcela</button></div></div><div style="padding:16px">'+finHonorariosHtml()+'</div></div>';
   else{corpo.innerHTML=finGeralHtml(key,ent,sai,res,margem);finGrafico()}
 }
 function finGeralHtml(key,ent,sai,res,margem){
@@ -2502,7 +2518,7 @@ function finGeralHtml(key,ent,sai,res,margem){
   }
   var lim=addDays(todayStr,30);
   var prox=parcs.filter(function(x){return x.st==='pendente'&&x.venc<=lim}).sort(function(a,b){return a.venc.localeCompare(b.venc)}).slice(0,8);
-  var proxHtml=prox.length?prox.map(function(x){var pr=procs.filter(function(q){return q.id===x.procId})[0]||{};var at=x.venc<todayStr;return'<div class="fin-prox"><div><b>'+esc(pr.cli||'Sem processo')+'</b><span>'+esc(x.desc)+' · vence '+fmt(x.venc)+(at?' · <em>em atraso</em>':'')+'</span></div><div class="fin-prox-v'+(at?' at':'')+'">'+fmtM(x.val)+'</div><button class="btn bs fin-btn-ent" onclick="cobrarParc(\''+x.id+'\')" title="Mensagem de cobrança no WhatsApp"><i class="ti ti-brand-whatsapp"></i></button><button class="btn bgr bs" onclick="pagarParc(\''+x.id+'\')" title="Marcar como recebida"><i class="ti ti-check"></i> Recebido</button></div>'}).join(''):'<div class="empty" style="padding:22px"><i class="ti ti-circle-check"></i>Nenhuma parcela vencendo nos próximos 30 dias</div>';
+  var proxHtml=prox.length?prox.map(function(x){var pr=procOuAvulso(x.procId)||{};var at=x.venc<todayStr;return'<div class="fin-prox"><div><b>'+esc(pr.cli||'Sem processo')+'</b><span>'+esc(x.desc)+' · vence '+fmt(x.venc)+(at?' · <em>em atraso</em>':'')+'</span></div><div class="fin-prox-v'+(at?' at':'')+'">'+fmtM(x.val)+'</div><button class="btn bs fin-btn-ent" onclick="cobrarParc(\''+x.id+'\')" title="Mensagem de cobrança no WhatsApp"><i class="ti ti-brand-whatsapp"></i></button><button class="btn bgr bs" onclick="pagarParc(\''+x.id+'\')" title="Marcar como recebida"><i class="ti ti-check"></i> Recebido</button></div>'}).join(''):'<div class="empty" style="padding:22px"><i class="ti ti-circle-check"></i>Nenhuma parcela vencendo nos próximos 30 dias</div>';
   return'<div class="fin-resumo"><i class="ti ti-message-2"></i><div>'+resumo+'</div></div>'+
     '<div class="card" style="margin-bottom:16px"><div class="card-header"><h3><i class="ti ti-chart-bar"></i> Últimos 6 meses</h3><span style="font-size:11px;color:var(--text3)">Entradas, saídas e resultado</span></div><div style="padding:14px 16px;height:260px"><canvas id="cFin"></canvas></div></div>'+
     '<div class="fin-2col">'+
@@ -2552,8 +2568,9 @@ function finRelista(tipo){
 function finHonorariosHtml(){
   if(honMigrar())saveAll();
   var ids={};parcs.forEach(function(p){ids[p.procId]=1});procs.filter(function(p){return p.val}).forEach(function(p){ids[p.id]=1});honMovs.forEach(function(m){ids[m.procId]=1});
-  var keys=Object.keys(ids).filter(function(k){return k&&procs.some(function(p){return p.id===k})});
-  if(!keys.length)return'<div class="empty" style="padding:28px"><i class="ti ti-receipt-off"></i>Nenhum processo com honorários. Informe o valor combinado ao cadastrar o processo.</div>';
+  honAvulsos.forEach(function(a){ids[a.id]=1});
+  var keys=Object.keys(ids).filter(function(k){return k&&!!procOuAvulso(k)});
+  if(!keys.length)return'<div class="empty" style="padding:28px"><i class="ti ti-receipt-off"></i>Nenhum honorário lançado. Informe o valor ao cadastrar o processo ou use <b>Honorários sem processo</b>.</div>';
   var rs=keys.map(honResumo);
   // primeiro quem tem atraso, depois quem tem saldo, quitados no fim
   rs.sort(function(a,b){var ka=a.vencidas.length?0:a.saldo>0.004?1:2,kb=b.vencidas.length?0:b.saldo>0.004?1:2;return ka-kb||String(a.proc.cli||'').localeCompare(String(b.proc.cli||''))});
@@ -2586,8 +2603,10 @@ function finHonorariosHtml(){
     kp.push([r.saldo<-0.004?'Crédito do cliente':'Saldo a receber',fmtM(Math.abs(r.saldo)),r.saldo>0.004?'#b45309':'#15803d',r.saldo>0.004?'#fde68a':'#bbf7d0']);
     return'<div class="hon-card'+(honFoco===pid?' foco':'')+'" id="hon-card-'+pid+'">'+
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">'+
+        (proc.avulso?'<div style="cursor:pointer" onclick="'+(proc.cliId?'abrirFichaCliente(\''+proc.cliId+'\')':'openHonAvulso(\''+pid+'\')')+'" title="Abrir cliente"><div style="font-family:\'Cormorant Garamond\',serif;font-size:16px;font-weight:700;color:var(--wine2)">'+esc(proc.cli||'Cliente')+'</div>'+
+        '<div style="font-size:11px;color:var(--text3);margin-top:2px"><span class="badge b-aguardando" style="font-size:9px">Sem processo</span> '+esc(proc.tipoAcao||'Honorários')+(proc.data?' · desde '+fmt(proc.data):'')+'</div></div>':
         '<div style="cursor:pointer" onclick="openPanel(\''+pid+'\')" title="Abrir processo"><div style="font-family:\'Cormorant Garamond\',serif;font-size:16px;font-weight:700;color:var(--wine2)">'+esc(proc.cli||'Processo não identificado')+'</div>'+
-        '<div style="font-size:11px;color:var(--text3);margin-top:2px">'+esc([proc.tipoAcao||proc.area,proc.trib,proc.num].filter(Boolean).join(' · '))+'</div></div>'+
+        '<div style="font-size:11px;color:var(--text3);margin-top:2px">'+esc([proc.tipoAcao||proc.area,proc.trib,proc.num].filter(Boolean).join(' · '))+'</div></div>')+
         (quitado?'<span class="badge b-concluido" style="font-size:11px;padding:4px 12px"><i class="ti ti-circle-check"></i> Quitado</span>':
          r.vencidas.length?'<span class="badge b-urgente" style="font-size:11px;padding:4px 12px"><i class="ti ti-alert-triangle"></i> '+r.vencidas.length+' vencida(s)</span>':
          r.combinado?'<span class="badge b-aguardando" style="font-size:11px;padding:4px 12px"><i class="ti ti-clock"></i> Em andamento</span>':'')+
@@ -2652,7 +2671,7 @@ function openParcModal(id,procId){
   editIds.parc=id||null;
   var p=id?parcs.filter(function(x){return x.id===id})[0]:null;
   document.getElementById('mParcT').textContent=id?'Editar parcela':'Nova parcela';
-  selProcOpts('fp2-proc',(p&&p.procId)||procId||'');
+  window._procOpcoesComAvulsos=true;selProcOpts('fp2-proc',(p&&p.procId)||procId||'');window._procOpcoesComAvulsos=false;
   document.getElementById('fp2-desc').value=(p&&p.desc)||'';
   document.getElementById('fp2-venc').value=(p&&p.venc)||'';
   document.getElementById('fp2-val').value=(p&&p.val)||'';
@@ -2663,7 +2682,7 @@ function openParcModal(id,procId){
 function saveParc(){
   var desc=document.getElementById('fp2-desc').value.trim(),val=parseFloat(document.getElementById('fp2-val').value),venc=document.getElementById('fp2-venc').value,procId=document.getElementById('fp2-proc').value;
   if(!desc||!val||!venc){alert('Preencha todos os campos.');return}
-  if(!procId){alert('Escolha o processo.');return}
+  if(!procId){alert('Escolha o processo ou a conta de honorários.');return}
   var st=document.getElementById('fp2-st').value,px;
   if(editIds.parc){
     px=parcs.filter(function(x){return x.id===editIds.parc})[0];
@@ -2997,7 +3016,7 @@ function cfgExcluirModelo(i){if(!confirm('Excluir o modelo "'+_cmNome(i)+'"?'))r
 function cfgNovoModelo(){var n=document.getElementById('cm-novo').value.trim();if(!n)return;cfg.checklists=cfg.checklists||{};cfg.checklists[n]=['Procuração e contrato de honorários assinados'];cfgSalvar('Modelo criado. Acrescente os documentos e salve.');renderConfig()}
 
 // ===================== COBRANÇA E RECIBO =====================
-function parcContexto(px){var pr=procs.filter(function(q){return q.id===px.procId})[0]||{};var c=cliDoProc(pr)||{};return{proc:pr,cli:c}}
+function parcContexto(px){var pr=procOuAvulso(px.procId)||{};var c=cliDoProc(pr)||{};return{proc:pr,cli:c}}
 function msgCobranca(lista,cli){
   var e=escritorio(),nome=primeiroNome(cli.nome),hoje=todayStr,tot=0;
   var linhas=lista.map(function(px){var rv=parcRest(px);tot+=rv;var at=px.venc<hoje;return'• '+px.desc+': '+fmtM(rv)+(rv<(+px.val||0)-0.004?' (saldo da parcela de '+fmtM(px.val)+')':'')+' — '+(at?'venceu em ':'vence em ')+fmt(px.venc)});
@@ -4133,6 +4152,63 @@ function procNumMudou(){
 // ===================== CONTA DE HONORÁRIOS (pagamentos, descontos e acréscimos) =====================
 var HON_TIPO={pagamento:'Pagamento recebido',desconto:'Desconto / abatimento',acrescimo:'Acréscimo'};
 function r2(v){return Math.round((+v||0)*100)/100}
+
+// ===================== HONORÁRIOS SEM PROCESSO =====================
+// conta de honorários de serviço sem processo (consulta, contrato, requerimento administrativo…);
+// tem os mesmos campos que o sistema usa de um processo (cli, cliId, val, tipoAcao), marcada como avulso
+var honAvulsos=ld('jur_ha',[]);
+STORE.jur_ha=[function(){return honAvulsos},function(v){honAvulsos=v}];
+NOME_LISTA.jur_ha='honorários sem processo';
+var HON_SERVICOS=['Consulta / parecer','Contrato / documento','Requerimento administrativo (INSS)','Acordo extrajudicial','Notificação extrajudicial','Assessoria mensal','Planejamento previdenciário','Inventário extrajudicial','Divórcio extrajudicial','Outro'];
+function honAvulsoPorId(id){return honAvulsos.filter(function(a){return a.id===id})[0]||null}
+function procOuAvulso(id){if(!id)return null;return procs.filter(function(x){return x.id===id})[0]||honAvulsoPorId(id)}
+var honAvEdit=null;
+function openHonAvulso(id){
+  honAvEdit=id||null;var a=id?honAvulsoPorId(id):null;
+  document.getElementById('mHonAvT').textContent=a?'Editar honorários sem processo':'Honorários sem processo';
+  var inp=document.getElementById('fhv-cli');inp.value=a?a.cli:'';inp.dataset.cliId=a?a.cliId||'':'';
+  cliAutocomplete('fhv-cli',function(){honAvHint()},honAvHint);honAvHint();
+  document.getElementById('dl-hon-serv').innerHTML=HON_SERVICOS.map(function(x){return'<option value="'+esc(x)+'">'}).join('');
+  document.getElementById('fhv-serv').value=a?a.tipoAcao||'':'';
+  document.getElementById('fhv-data').value=a?a.data||todayStr:todayStr;
+  document.getElementById('fhv-obs').value=a?a.obs||'':'';
+  var temParc=a&&parcs.some(function(x){return x.procId===a.id});
+  document.getElementById('fhv-val').value=a&&a.val?numBR(a.val):'';document.getElementById('fhv-val').disabled=!!temParc;
+  document.getElementById('fhv-n').value='1';document.getElementById('fhv-v1').value=todayStr;
+  document.getElementById('fhv-parc-box').style.display=temParc?'none':'';
+  document.getElementById('fhv-val-hint').innerHTML=temParc?'Para mudar valor ou parcelas, use <b>Valor e parcelas</b> na conta.':'';
+  document.getElementById('fhv-pago').checked=false;
+  openModal('mHonAv');setTimeout(function(){document.getElementById(a?'fhv-serv':'fhv-cli').focus()},60);
+}
+function honAvHint(){var inp=document.getElementById('fhv-cli'),h=document.getElementById('fhv-cli-hint'),c=cliPorId(inp.dataset.cliId)||cliPorNome(inp.value.trim());
+  if(c){inp.dataset.cliId=c.id;h.innerHTML='<i class="ti ti-circle-check" style="color:#15803d"></i> Cliente cadastrado'+(c.doc?' · '+fmtDoc(c.doc):'')}
+  else h.innerHTML=inp.value.trim()?'Cliente não cadastrado. <a onclick="cliCadastroRapido(\'fhv-cli\')">Cadastrar agora</a> (ou salve só com o nome)':''}
+function saveHonAvulso(){
+  var inp=document.getElementById('fhv-cli'),nome=inp.value.trim();if(!nome){alert('Informe o cliente.');return}
+  var c=cliPorId(inp.dataset.cliId)||cliPorNome(nome),serv=document.getElementById('fhv-serv').value.trim();
+  if(!serv){alert('Informe o serviço (ex.: consulta, contrato, requerimento ao INSS).');return}
+  var a=honAvEdit?honAvulsoPorId(honAvEdit):null,novo=!a;
+  if(novo){
+    var val=lerValorBR(document.getElementById('fhv-val').value);if(!(val>0)){alert('Informe o valor combinado.');return}
+    var n=Math.max(1,parseInt(document.getElementById('fhv-n').value)||1),v1=document.getElementById('fhv-v1').value||todayStr,pago=document.getElementById('fhv-pago').checked;
+    a={id:uid(),avulso:true,st:'Ativo',area:'Sem processo',criadoEm:new Date().toISOString(),val:r2(val)};honAvulsos.unshift(a);
+  }
+  a.cli=c?c.nome:nome;a.cliId=c?c.id:'';a.tipoAcao=serv;a.data=document.getElementById('fhv-data').value||todayStr;a.obs=document.getElementById('fhv-obs').value.trim();
+  if(novo){
+    gerarParcelasProc(a.id,a.val,n,v1);
+    if(pago){var m=honRegistrar({procId:a.id,tipo:'pagamento',val:a.val,data:a.data,obs:'Recebido à vista'});}
+  }
+  saveAll();closeModal('mHonAv');honFoco=a.id;
+  if(currentTab==='financeiro')renderFinanceiro();renderStats();
+  toast(novo?(pago?'Honorário lançado e recebido (entrou em Entradas).':'Honorário lançado. As parcelas estão em Honorários a receber.'):'Conta atualizada.','ok');
+}
+function delHonAvulso(id){
+  var a=honAvulsoPorId(id);if(!a)return;
+  if(honMovs.some(function(m){return m.procId===id&&m.tipo==='pagamento'})){alert('Esta conta já tem pagamentos registrados. Exclua os pagamentos no extrato antes de excluir a conta.');return}
+  if(!confirm('Excluir os honorários de '+a.cli+' ('+(a.tipoAcao||'')+') e as parcelas em aberto?'))return;
+  honAvulsos=honAvulsos.filter(function(x){return x.id!==id});parcs=parcs.filter(function(x){return x.procId!==id});honMovs=honMovs.filter(function(m){return m.procId!==id});
+  saveAll();if(currentTab==='financeiro')renderFinanceiro();renderStats();toast('Conta excluída.','ok');
+}
 function parcRest(p){return p.st==='pago'?0:Math.max(0,r2((+p.val||0)-(+p.pago||0)-(+p.abat||0)))}
 function totRest(l){return r2(l.reduce(function(s,p){return s+parcRest(p)},0))}
 // parcelas pagas antes desta versão viram "pagamentos" na conta, sem duplicar
@@ -4172,7 +4248,7 @@ function honAlocar(procId,valor,modo,parcAlvo){
 function honResumo(procId){
   if(honMigrar())saveAll();
   honRecalc(procId);
-  var p=procs.filter(function(x){return x.id===procId})[0]||{};
+  var p=procOuAvulso(procId)||{};
   var pp=parcs.filter(function(x){return x.procId===procId});
   var movs=honMovs.filter(function(m){return m.procId===procId}).sort(function(a,b){return(b.data||'').localeCompare(a.data||'')});
   var soma=function(t){return r2(movs.filter(function(m){return m.tipo===t}).reduce(function(s,m){return s+(+m.val||0)},0))};
@@ -4190,7 +4266,7 @@ function honFin(m,proc){
 }
 // registra pagamento, desconto ou acréscimo; o pagamento entra sozinho em Entradas
 function honRegistrar(o){
-  var proc=procs.filter(function(x){return x.id===o.procId})[0];if(!proc)return null;
+  var proc=procOuAvulso(o.procId);if(!proc)return null;
   var m={id:uid(),procId:proc.id,tipo:o.tipo,data:o.data||todayStr,val:r2(o.val),forma:o.forma||'',obs:o.obs||'',modo:o.modo||'antigas',parcAlvo:o.parcAlvo||'',aloc:[],por:sbUser?sbUser.email:''};
   if(m.tipo==='acrescimo'){
     var np={id:uid(),procId:proc.id,desc:o.obs||'Acréscimo',venc:o.venc||m.data,val:m.val,st:'pendente',acrescimo:true};
@@ -4293,7 +4369,7 @@ function honAcPrevia(){
   document.getElementById('fha-previa').innerHTML=ref?(novo>0.004?'Saldo a parcelar: <b>'+fmtM(novo)+'</b> em '+n+'× de <b>'+fmtM(novo/n)+'</b>. Parcelas que já tiveram pagamento ou desconto são mantidas.':'Não há saldo a parcelar com esse valor.'):'Saldo do cliente com o novo valor: <b>'+fmtM(r2(val+r.acrescimos-r.recebido-r.descontos))+'</b>. As parcelas atuais não mudam.';
 }
 function saveHonAcordo(){
-  var p=procs.filter(function(x){return x.id===honAcProc})[0];if(!p)return;
+  var p=procOuAvulso(honAcProc);if(!p)return;
   var val=lerValorBR(document.getElementById('fha-val').value);
   if(!(val>=0)){alert('Informe o valor combinado.');return}
   var refazer=document.getElementById('fha-refazer').checked,n=Math.max(1,parseInt(document.getElementById('fha-n').value)||1),v1=document.getElementById('fha-v1').value;
@@ -4337,6 +4413,7 @@ function honAcoesHtml(pid){
     '<button class="btn bo bs" onclick="openHonModal(\''+pid+'\',\'acrescimo\')"><i class="ti ti-plus"></i> Acréscimo</button>'+
     '<button class="btn bo bs" onclick="openHonAcordo(\''+pid+'\')"><i class="ti ti-adjustments"></i> Valor e parcelas</button>'+
     '<button class="btn bo bs" onclick="openParcModal(null,\''+pid+'\')"><i class="ti ti-calendar-plus"></i> Parcela avulsa</button>'+
+    (honAvulsoPorId(pid)?'<button class="btn bo bs" onclick="openHonAvulso(\''+pid+'\')" title="Editar cliente e serviço"><i class="ti ti-pencil"></i> Editar</button><button class="btn bd bs" onclick="delHonAvulso(\''+pid+'\')" title="Excluir esta conta"><i class="ti ti-trash"></i></button>':'')+
   '</div>';
 }
 // resumo compacto usado no painel do processo
@@ -4357,7 +4434,7 @@ function honPainelHtml(pid){
 var honFoco=null;
 function reciboMov(id){
   var m=honMovs.filter(function(x){return x.id===id})[0];if(!m)return;
-  var proc=procs.filter(function(x){return x.id===m.procId})[0]||{},c=cliDoProc(proc)||{};
+  var proc=procOuAvulso(m.procId)||{},c=cliDoProc(proc)||{};
   var pd=(m.aloc||[]).map(function(a){var px=parcs.filter(function(x){return x.id===a.parcId})[0];return px?px.desc+(Math.abs(a.val-(+px.val||0))>0.004?' — parcial':''):''}).filter(Boolean);
   docJanela('Recibo — '+(c.nome||proc.cli||'cliente'),reciboTexto({cli:c,proc:proc,valor:m.val,ref:'honorários advocatícios'+(pd.length?' ('+pd.join('; ')+')':'')+(proc.num?', processo nº '+proc.num:''),data:m.data,forma:m.forma}),{whats:c.tel});
 }
@@ -4696,7 +4773,7 @@ function relDados(){
   var P=relPeriodo(),ini=P.ini,fim=P.fim,adv=relF.adv,area=relF.area;
   function dentro(d){return d&&d>=ini&&d<=fim}
   function procOk(p){return(!adv||respCanon(p.resp)===adv)&&(!area||(p.area||'')===area)}
-  var procMap={};procs.forEach(function(p){procMap[p.id]=p});
+  var procMap={};procs.forEach(function(p){procMap[p.id]=p});honAvulsos.forEach(function(h){procMap[h.id]=h});
   var pf=procs.filter(procOk);
   var novos=pf.filter(function(p){return dentro(p.ab)});
   var encerr=pf.filter(function(p){return _ENC[p.st]&&dentro(p.encerradoEm)});
@@ -5518,7 +5595,7 @@ function abrirFichaCliente(cliId){
     if(e.k==='proc')return pids.indexOf(e.id)>-1;
     return false;
   }).slice(0,8);
-  var hon={comb:0,rec:0,saldo:0,venc:0};ps.forEach(function(p){var r=honResumo(p.id);hon.comb+=r.combinado;hon.rec+=r.recebido;hon.saldo+=Math.max(0,r.saldo);hon.venc+=totRest(r.vencidas)});
+  var hon={comb:0,rec:0,saldo:0,venc:0};ps.concat(honAvulsos.filter(function(a){return a.cliId===c.id})).forEach(function(p){var r=honResumo(p.id);hon.comb+=r.combinado;hon.rec+=r.recebido;hon.saldo+=Math.max(0,r.saldo);hon.venc+=totRest(r.vencidas)});
   var docs=docsPendentes.filter(function(d){return d.cliId===c.id&&d.status==='pendente'}),anx=anexos.filter(function(a){return a.cliId===c.id}).length;
   var atend=(typeof atendimentos!=='undefined'?atendimentos:[]).filter(function(a){return a.cliId===c.id||a.cli===c.nome}).length;
   var qProc=kbQ('kb-proc');
