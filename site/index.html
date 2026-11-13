@@ -431,6 +431,7 @@ body.com-crono{padding-bottom:76px}
 .h-add{color:#15803d;background:#f0fdf4;padding:1px 7px;border-radius:999px}.h-mod{color:#b45309;background:#fffbeb;padding:1px 7px;border-radius:999px}.h-rem{color:#b91c1c;background:#fef2f2;padding:1px 7px;border-radius:999px}
 .hist-d{margin-top:6px;font-size:12px;color:var(--text2);line-height:1.6}.hist-d a{color:var(--wine);font-weight:600}
 /* Jurisprudência */
+.cli-tipo{display:flex;gap:8px;flex-wrap:wrap}.cli-tipo label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);border-radius:var(--r);padding:7px 12px;cursor:pointer;font-size:13px;font-weight:600;margin:0;background:var(--white)}.cli-tipo label:has(input:checked){border-color:var(--gold);background:var(--cream);color:var(--wine)}.cli-tipo input{width:auto;margin:0}
 .jp-fontes{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .jp-fonte{display:inline-flex;border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;background:var(--white)}
 .jp-fonte.dest{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,162,39,.18)}
@@ -724,9 +725,9 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 <div class="modal"><div class="mh"><h2 id="mCliT">Novo cliente</h2><button class="btn bo bs" onclick="closeModal('mCliente')"><i class="ti ti-x"></i></button></div>
 <div class="mb"><div class="fg">
   <div class="sl">Identificação</div>
-  <div class="fgr full"><label>Nome *</label><input id="fc-nome"></div>
-  <div class="fgr"><label>CPF / CNPJ</label><input id="fc-doc" onblur="cliChecaDuplicado()"><div class="ac-hint" id="fc-doc-hint"></div></div>
-  <div class="fgr"><label>Tipo</label><select id="fc-tipo"><option>Pessoa Física</option><option>Pessoa Jurídica</option></select></div>
+  <div class="fgr full"><label>Tipo de cliente</label><div class="cli-tipo" role="radiogroup"><label><input type="radio" name="fc-tipo-r" value="Pessoa Física" onchange="cliTipoMudou(this.value)" checked> <i class="ti ti-user"></i> Pessoa física (CPF)</label><label><input type="radio" name="fc-tipo-r" value="Pessoa Jurídica" onchange="cliTipoMudou(this.value)"> <i class="ti ti-building"></i> Empresa (CNPJ)</label></div><input type="hidden" id="fc-tipo" value="Pessoa Física"></div>
+  <div class="fgr full"><label id="fc-nome-l">Nome *</label><input id="fc-nome"></div>
+  <div class="fgr"><label id="fc-doc-l">CPF</label><input id="fc-doc" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" oninput="cliDocDigitado(this)" onblur="cliChecaDuplicado()"><div class="ac-hint" id="fc-doc-hint"></div></div>
   <div class="fgr"><label>RG e órgão expedidor</label><input id="fc-rg" placeholder="Ex: 1234567 SSP/GO"></div>
   <div class="fgr"><label>Nacionalidade</label><input id="fc-nac" list="dl-nac" placeholder="brasileiro / brasileira"></div>
   <div class="fgr"><label>Estado civil</label><input id="fc-civil" list="dl-civil" placeholder="solteiro, casada…"></div>
@@ -736,15 +737,16 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
   <datalist id="dl-nac"><option value="brasileiro"><option value="brasileira"><option value="estrangeiro"><option value="estrangeira"></datalist>
   <datalist id="dl-civil"><option value="solteiro"><option value="solteira"><option value="casado"><option value="casada"><option value="divorciado"><option value="divorciada"><option value="viúvo"><option value="viúva"><option value="em união estável"><option value="separado judicialmente"><option value="separada judicialmente"></datalist>
   <div class="sl">Contato</div>
-  <div class="fgr"><label>Telefone / WhatsApp</label><input id="fc-tel" placeholder="(62) 9 0000-0000"></div>
+  <div class="fgr"><label>Telefone / WhatsApp</label><input id="fc-tel" inputmode="tel" placeholder="(64) 90000-0000" maxlength="15" oninput="telDigitado(this)"></div>
   <div class="fgr"><label>E-mail</label><input id="fc-email"></div>
   <div class="sl">Endereço</div>
   <div class="fgr"><label>CEP — digite e o endereço vem sozinho</label><div style="position:relative"><input id="fc-cep" inputmode="numeric" placeholder="00000-000" maxlength="9" oninput="cepDigitado(this)" onblur="cepBuscar(true)"><i class="ti ti-search" id="fc-cep-ic" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text3);cursor:pointer" onclick="cepBuscar(true)" title="Buscar endereço"></i></div><div class="ac-hint" id="fc-cep-hint"><a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank">Não sabe o CEP?</a></div></div>
   <div class="fgr"><label>Cidade / UF</label><div style="display:flex;gap:6px"><input id="fc-cid" style="flex:1"><select id="fc-uf" style="width:78px"><option value="">UF</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></div></div>
-  <div class="fgr full"><label>Endereço (rua, número, complemento e bairro)</label><input id="fc-end" placeholder="Ex: Rua das Flores, nº 120, ap. 3, Centro"></div>
+  <div class="fgr full"><label>Endereço (rua, número e bairro)</label><input id="fc-end" placeholder="Ex: Rua das Flores, nº 120, Centro"></div>
+  <div class="fgr full"><label>Complemento <span style="font-weight:400;color:var(--text3)">(apto, bloco, quadra, lote, casa, referência)</span></label><input id="fc-compl" placeholder="Ex: Qd. 10, Lt. 5 · Apto 302, Bloco B"></div>
   <div class="sl">Aniversário e observações</div>
   <div class="fgr"><label>Data de aniversário</label><input type="date" id="fc-aniv"></div>
-  <div class="fgr"><label>Como conheceu</label><select id="fc-origem"><option value="">—</option><option>Indicação</option><option>Internet</option><option>Redes sociais</option><option>Outro</option></select></div>
+  <div class="fgr"><label>Como conheceu</label><select id="fc-origem" onchange="cliOrigemMudou()"><option value="">—</option><option>Indicação</option><option>Internet</option><option>Redes sociais</option><option value="__outro">Outro (escrever)</option></select><input id="fc-origem-outro" class="hidden" style="margin-top:6px" placeholder="Escreva como conheceu (ex.: placa no escritório, rádio, cliente antigo)"></div>
   <div class="fgr full"><label>Histórico / Obs.</label><textarea id="fc-obs"></textarea></div>
 </div></div>
 <div class="mf"><button class="btn bo" onclick="closeModal('mCliente')">Cancelar</button><button class="btn bp" onclick="saveCliente()"><i class="ti ti-check"></i> Salvar</button></div>
@@ -1510,7 +1512,7 @@ function renderClientes(){
 }
 function renderCliList(){if(!document.getElementById('cli-list'))return;
   var q=(document.getElementById('csq').value||'').toLowerCase();
-  var data=clientes.filter(function(c){return!q||[c.nome,c.doc,c.email,c.tel].some(function(x){return(x||'').toLowerCase().indexOf(q)>-1})});
+  var _qd=soDigitos(q);var data=clientes.filter(function(c){return!q||(_qd.length>=3&&[c.doc,c.tel].some(function(x){return soDigitos(x).indexOf(_qd)>-1}))||[c.nome,c.doc,c.email,c.tel].some(function(x){return(x||'').toLowerCase().indexOf(q)>-1})});
   var el=document.getElementById('cli-list');
   if(!data.length){el.innerHTML='<div class="empty"><i class="ti ti-users-off"></i>Nenhum cliente cadastrado</div>';return}
   el.innerHTML=data.map(function(c){
@@ -1546,9 +1548,50 @@ function renderCliList(){if(!document.getElementById('cli-list'))return;
 }
 var cliRapidoAlvo=null;
 function cliCadastroRapido(alvo){var nome=document.getElementById(alvo).value.trim();openCliModal();cliRapidoAlvo=alvo;document.getElementById('fc-nome').value=nome;setTimeout(function(){document.getElementById('fc-doc').focus()},50)}
-function cliChecaDuplicado(){var d=soDigitos(document.getElementById('fc-doc').value),h=document.getElementById('fc-doc-hint');if(!h)return null;var dup=d.length>=11?clientes.filter(function(c){return c.id!==editIds.cli&&soDigitos(c.doc)===d})[0]:null;h.innerHTML=dup?'<span style="color:#b91c1c"><i class="ti ti-alert-triangle"></i> Já cadastrado: '+esc(dup.nome)+'</span>':(d&&d.length!==11&&d.length!==14?'<span style="color:#b45309">CPF tem 11 dígitos e CNPJ 14</span>':'');return dup}
-function openCliModal(id){cliRapidoAlvo=null;editIds.cli=id||null;var c=id?clientes.filter(function(x){return x.id===id})[0]:{};document.getElementById('mCliT').textContent=id?'Editar cliente':'Novo cliente';['nome','doc','tel','email','end','cid','cep','obs','rg','nac','civil','prof'].forEach(function(k){document.getElementById('fc-'+k).value=c[k]||''});document.getElementById('fc-uf').value=c.uf||'';document.getElementById('fc-vh').value=c.valorHora?numBR(c.valorHora):'';document.getElementById('fc-drive').value=(c.drive&&c.drive.link)||c.driveLink||'';var ch=document.getElementById('fc-cep-hint');if(ch)ch.innerHTML=cepHintPadrao();_cepUlt='';document.getElementById('fc-tipo').value=c.tipo||'Pessoa Física';document.getElementById('fc-aniv').value=c.aniv||'';document.getElementById('fc-origem').value=c.origem||'';var hh=document.getElementById('fc-doc-hint');if(hh)hh.innerHTML='';openModal('mCliente')}
-function saveCliente(){var nome=document.getElementById('fc-nome').value.trim();if(!nome){alert('Nome obrigatório.');return}var fe=document.getElementById('fc-end');if(/nº\s*(,|$)/.test(fe.value)){if(!confirm('Falta o número no endereço. Salvar como "s/nº"?')){fe.focus();return}fe.value=fe.value.replace(/nº\s*(,|$)/,'s/nº$1')}var dup=cliChecaDuplicado();if(dup&&!confirm('Já existe um cliente com este CPF/CNPJ: '+dup.nome+'.\nSalvar mesmo assim?'))return;var o={id:editIds.cli||uid(),nome:nome,doc:document.getElementById('fc-doc').value.trim(),tipo:document.getElementById('fc-tipo').value,tel:document.getElementById('fc-tel').value.trim(),email:document.getElementById('fc-email').value.trim(),end:document.getElementById('fc-end').value.trim(),cid:document.getElementById('fc-cid').value.trim(),cep:document.getElementById('fc-cep').value.trim(),uf:document.getElementById('fc-uf').value,rg:document.getElementById('fc-rg').value.trim(),nac:document.getElementById('fc-nac').value.trim(),civil:document.getElementById('fc-civil').value.trim(),prof:document.getElementById('fc-prof').value.trim(),valorHora:lerValorBR(document.getElementById('fc-vh').value)||0,driveLink:(function(v){return/^https?:\/\//.test(v)?v:''})(document.getElementById('fc-drive').value.trim()),aniv:document.getElementById('fc-aniv').value,origem:document.getElementById('fc-origem').value,obs:document.getElementById('fc-obs').value.trim()};var nomeAntigo=null;if(editIds.cli){var i=clientes.findIndex(function(x){return x.id===editIds.cli});nomeAntigo=clientes[i].nome;clientes[i]=Object.assign({},clientes[i],o)}else clientes.unshift(o);if(nomeAntigo&&nomeAntigo!==o.nome)procs.forEach(function(p){if(p.cliId===o.id||p.cli===nomeAntigo){p.cli=o.nome;p.cliId=o.id}});saveAll();closeModal('mCliente');toast('Cliente salvo!','ok');gdrAposSalvarCliente(cliPorId(o.id));if(cliRapidoAlvo){var inp=document.getElementById(cliRapidoAlvo);inp.value=o.nome;inp.dataset.cliId=o.id;if(cliRapidoAlvo==='fp-cli'){if(!document.getElementById('fp-cid').value&&o.cid)document.getElementById('fp-cid').value=o.cid;procCliHint()}cliRapidoAlvo=null;renderStats();return}renderClientes();renderStats()}
+
+// ===== Máscaras e opções do cadastro de cliente =====
+function mascaraCPF(d){d=soDigitos(d).slice(0,11);return d.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d{1,2})$/,'.$1-$2')}
+function mascaraCNPJ(d){d=soDigitos(d).slice(0,14);return d.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/,'$1.$2.$3/$4').replace(/\/(\d{4})(\d{1,2})$/,'/$1-$2')}
+function mascaraTel(v){var d=soDigitos(v);if(d.length>11&&d.indexOf('55')===0)d=d.slice(2);if(d.length>11&&d[0]==='0')d=d.slice(1);d=d.slice(0,11);
+  if(!d)return'';if(d.length<=2)return'('+d;var ddd='('+d.slice(0,2)+') ',r=d.slice(2);
+  if(d.length===11)return ddd+r.slice(0,5)+'-'+r.slice(5);
+  return ddd+(r.length>4?r.slice(0,4)+'-'+r.slice(4):r);}
+function _mascarar(el,f){var antes=el.value,pos=el.selectionStart==null?antes.length:el.selectionStart,dig=soDigitos(antes.slice(0,pos)).length;el.value=f(antes);
+  if(document.activeElement===el){var n=0,i=0;while(i<el.value.length&&n<dig){if(/\d/.test(el.value[i]))n++;i++}try{el.setSelectionRange(i,i)}catch(e){}}}
+function cpfValido(d){d=soDigitos(d);if(d.length!==11||/^(\d)\1+$/.test(d))return false;for(var t=9;t<11;t++){var s=0;for(var i=0;i<t;i++)s+=+d[i]*(t+1-i);if(((s*10)%11)%10!==+d[t])return false}return true}
+function cnpjValido(d){d=soDigitos(d);if(d.length!==14||/^(\d)\1+$/.test(d))return false;function dv(n){var s=0,p=n-7;for(var i=0;i<n;i++){s+=+d[i]*p--;if(p<2)p=9}var r=s%11;return r<2?0:11-r}return dv(12)===+d[12]&&dv(13)===+d[13]}
+function cliTipoAtual(){return document.getElementById('fc-tipo').value==='Pessoa Jurídica'?'PJ':'PF'}
+function cliDocDigitado(el){
+  var d=soDigitos(el.value);
+  if(cliTipoAtual()==='PF'&&d.length>11){cliTipoMudou('Pessoa Jurídica',true);toast('Mais de 11 números: mudei para Empresa (CNPJ).','ok')}
+  _mascarar(el,cliTipoAtual()==='PJ'?mascaraCNPJ:mascaraCPF);
+  var h=document.getElementById('fc-doc-hint');if(h&&!/Já cadastrado/.test(h.innerHTML))h.innerHTML='';
+}
+function cliTipoMudou(t,manterValor){
+  var pj=t==='Pessoa Jurídica';document.getElementById('fc-tipo').value=pj?'Pessoa Jurídica':'Pessoa Física';
+  [].forEach.call(document.querySelectorAll('input[name="fc-tipo-r"]'),function(r){r.checked=r.value===(pj?'Pessoa Jurídica':'Pessoa Física')});
+  document.getElementById('fc-doc-l').textContent=pj?'CNPJ':'CPF';
+  document.getElementById('fc-nome-l').textContent=pj?'Razão social *':'Nome *';
+  var doc=document.getElementById('fc-doc');doc.placeholder=pj?'00.000.000/0000-00':'000.000.000-00';doc.maxLength=pj?18:14;
+  var d=soDigitos(doc.value);if(!pj&&d.length>11&&!manterValor)d=d.slice(0,11);doc.value=pj?mascaraCNPJ(d):mascaraCPF(d);
+  [['fc-rg','RG e órgão expedidor','Inscrição estadual'],['fc-nac','Nacionalidade',''],['fc-civil','Estado civil',''],['fc-prof','Profissão','Ramo de atividade']].forEach(function(x){
+    var el=document.getElementById(x[0]);if(!el)return;var box=el.closest('.fgr');if(!box)return;var lb=box.querySelector('label');
+    if(x[2]){if(lb)lb.textContent=pj?x[2]:x[1];el.placeholder=pj?(x[0]==='fc-rg'?'Ex: 10.123.456-7 (ou isento)':'Ex: comércio varejista'):(x[0]==='fc-rg'?'Ex: 1234567 SSP/GO':'Ex: lavrador, do lar, aposentado')}
+    else box.style.display=pj?'none':'';
+  });
+}
+function telDigitado(el){_mascarar(el,mascaraTel)}
+var CLI_ORIGENS=['Indicação','Internet','Redes sociais'];
+function cliOrigemMudou(){var s=document.getElementById('fc-origem'),o=document.getElementById('fc-origem-outro');var outro=s.value==='__outro';o.classList.toggle('hidden',!outro);if(outro)setTimeout(function(){o.focus()},30)}
+function cliOrigemSet(v){var s=document.getElementById('fc-origem'),o=document.getElementById('fc-origem-outro');v=v||'';
+  if(!v||CLI_ORIGENS.indexOf(v)>-1){s.value=v;o.value='';o.classList.add('hidden')}else{s.value='__outro';o.value=v==='Outro'?'':v;o.classList.remove('hidden')}}
+function cliOrigemGet(){var s=document.getElementById('fc-origem').value;if(s!=='__outro')return s;return document.getElementById('fc-origem-outro').value.trim()||'Outro'}
+// endereço com complemento logo após o número
+function cliEndereco(c){c=c||{};var e=String(c.end||'').trim(),k=String(c.compl||'').trim();if(!k)return e;if(!e)return k;
+  var m=e.match(/(n[º°o.]?\s*\d+[A-Za-z]?|s\/\s*n[º°o]?)/i);if(m){var i=m.index+m[0].length;return e.slice(0,i)+', '+k+e.slice(i)}return e+', '+k}
+function cliChecaDuplicado(){var d=soDigitos(document.getElementById('fc-doc').value),h=document.getElementById('fc-doc-hint');if(!h)return null;var dup=d.length>=11?clientes.filter(function(c){return c.id!==editIds.cli&&soDigitos(c.doc)===d})[0]:null;h.innerHTML=dup?'<span style="color:#b91c1c"><i class="ti ti-alert-triangle"></i> Já cadastrado: '+esc(dup.nome)+'</span>':(d&&d.length!==11&&d.length!==14?'<span style="color:#b45309">'+(cliTipoAtual()==='PJ'?'CNPJ tem 14 números':'CPF tem 11 números')+'</span>':(d.length===11&&!cpfValido(d)?'<span style="color:#b45309"><i class="ti ti-alert-triangle"></i> CPF inválido (dígito verificador). Confira.</span>':(d.length===14&&!cnpjValido(d)?'<span style="color:#b45309"><i class="ti ti-alert-triangle"></i> CNPJ inválido (dígito verificador). Confira.</span>':'')));return dup}
+function openCliModal(id){cliRapidoAlvo=null;editIds.cli=id||null;var c=id?clientes.filter(function(x){return x.id===id})[0]:{};document.getElementById('mCliT').textContent=id?'Editar cliente':'Novo cliente';['nome','doc','tel','email','end','compl','cid','cep','obs','rg','nac','civil','prof'].forEach(function(k){document.getElementById('fc-'+k).value=c[k]||''});document.getElementById('fc-uf').value=c.uf||'';document.getElementById('fc-vh').value=c.valorHora?numBR(c.valorHora):'';document.getElementById('fc-drive').value=(c.drive&&c.drive.link)||c.driveLink||'';var ch=document.getElementById('fc-cep-hint');if(ch)ch.innerHTML=cepHintPadrao();_cepUlt='';var tp=c.tipo||(soDigitos(c.doc).length===14?'Pessoa Jurídica':'Pessoa Física');cliTipoMudou(tp,true);document.getElementById('fc-tel').value=c.tel?mascaraTel(c.tel):'';document.getElementById('fc-aniv').value=c.aniv||'';cliOrigemSet(c.origem);var hh=document.getElementById('fc-doc-hint');if(hh)hh.innerHTML='';openModal('mCliente')}
+function saveCliente(){var nome=document.getElementById('fc-nome').value.trim();if(!nome){alert('Nome obrigatório.');return}var fe=document.getElementById('fc-end');if(/nº\s*(,|$)/.test(fe.value)){if(!confirm('Falta o número no endereço. Salvar como "s/nº"?')){fe.focus();return}fe.value=fe.value.replace(/nº\s*(,|$)/,'s/nº$1')}var dup=cliChecaDuplicado();if(dup&&!confirm('Já existe um cliente com este CPF/CNPJ: '+dup.nome+'.\nSalvar mesmo assim?'))return;var _dd=soDigitos(document.getElementById('fc-doc').value);var o={id:editIds.cli||uid(),nome:nome,doc:(_dd.length===11||_dd.length===14)?fmtDoc(_dd):document.getElementById('fc-doc').value.trim(),tipo:document.getElementById('fc-tipo').value,tel:mascaraTel(document.getElementById('fc-tel').value.trim())||document.getElementById('fc-tel').value.trim(),email:document.getElementById('fc-email').value.trim(),end:document.getElementById('fc-end').value.trim(),compl:document.getElementById('fc-compl').value.trim(),cid:document.getElementById('fc-cid').value.trim(),cep:document.getElementById('fc-cep').value.trim(),uf:document.getElementById('fc-uf').value,rg:document.getElementById('fc-rg').value.trim(),nac:document.getElementById('fc-nac').value.trim(),civil:document.getElementById('fc-civil').value.trim(),prof:document.getElementById('fc-prof').value.trim(),valorHora:lerValorBR(document.getElementById('fc-vh').value)||0,driveLink:(function(v){return/^https?:\/\//.test(v)?v:''})(document.getElementById('fc-drive').value.trim()),aniv:document.getElementById('fc-aniv').value,origem:cliOrigemGet(),obs:document.getElementById('fc-obs').value.trim()};var nomeAntigo=null;if(editIds.cli){var i=clientes.findIndex(function(x){return x.id===editIds.cli});nomeAntigo=clientes[i].nome;clientes[i]=Object.assign({},clientes[i],o)}else clientes.unshift(o);if(nomeAntigo&&nomeAntigo!==o.nome)procs.forEach(function(p){if(p.cliId===o.id||p.cli===nomeAntigo){p.cli=o.nome;p.cliId=o.id}});saveAll();closeModal('mCliente');toast('Cliente salvo!','ok');gdrAposSalvarCliente(cliPorId(o.id));if(cliRapidoAlvo){var inp=document.getElementById(cliRapidoAlvo);inp.value=o.nome;inp.dataset.cliId=o.id;if(cliRapidoAlvo==='fp-cli'){if(!document.getElementById('fp-cid').value&&o.cid)document.getElementById('fp-cid').value=o.cid;procCliHint()}cliRapidoAlvo=null;renderStats();return}renderClientes();renderStats()}
 function delCli(id){if(!confirm('Excluir cliente?'))return;clientes=clientes.filter(function(x){return x.id!==id});saveAll();renderClientes();renderStats()}
 
 // ANEXOS DO CLIENTE
@@ -2240,8 +2283,8 @@ function mnGerarToggle(){
   document.getElementById('gd-senha-wrap').style.display=isHon?'flex':'none';
 }
 function mnQualificacao(c,qualifExtra){
-  if(c.tipo==='Pessoa Jurídica')return'pessoa jurídica de direito privado, inscrita no CNPJ sob o nº '+(c.doc||'—')+', com sede em '+(c.end||'—')+', '+(cliCidadeUF(c)||'—')+', CEP '+(c.cep||'—')+(c.tel?', telefone '+c.tel:'')+(c.email?', e-mail '+c.email:'');
-  return(qualifExtra||'brasileiro(a)')+', inscrito(a) no CPF nº '+(c.doc||'—')+', residente e domiciliado(a) em '+(c.end||'—')+', '+(cliCidadeUF(c)||'—')+', CEP '+(c.cep||'—')+(c.tel?', telefone '+c.tel:'')+(c.email?', e-mail '+c.email:'');
+  if(c.tipo==='Pessoa Jurídica')return'pessoa jurídica de direito privado, inscrita no CNPJ sob o nº '+(c.doc||'—')+', com sede em '+(cliEndereco(c)||'—')+', '+(cliCidadeUF(c)||'—')+', CEP '+(c.cep||'—')+(c.tel?', telefone '+c.tel:'')+(c.email?', e-mail '+c.email:'');
+  return(qualifExtra||'brasileiro(a)')+', inscrito(a) no CPF nº '+(c.doc||'—')+', residente e domiciliado(a) em '+(cliEndereco(c)||'—')+', '+(cliCidadeUF(c)||'—')+', CEP '+(c.cep||'—')+(c.tel?', telefone '+c.tel:'')+(c.email?', e-mail '+c.email:'');
 }
 function mnGerarDocumento(){
   var cliId=document.getElementById('gd-cli').value;
@@ -4852,20 +4895,20 @@ function relProcJanela(pid){
 var WORD_CAMPOS=[
  ['Cliente','CLIENTE','Nome do cliente'],['Cliente','CLIENTE_MAIUSCULO','Nome em letras maiúsculas'],['Cliente','QUALIFICACAO','Qualificação completa (nome, nacionalidade, estado civil, profissão, CPF, RG, contato e endereço)'],
  ['Cliente','NACIONALIDADE','brasileiro / brasileira'],['Cliente','ESTADO_CIVIL','solteiro, casada…'],['Cliente','PROFISSAO','Profissão'],['Cliente','CPF','CPF ou CNPJ formatado'],['Cliente','RG','RG e órgão expedidor'],
- ['Cliente','EMAIL','E-mail'],['Cliente','TELEFONE','Telefone'],['Cliente','ENDERECO','Rua, número e bairro'],['Cliente','CIDADE','Cidade'],['Cliente','UF','Estado'],['Cliente','CIDADE_UF','Cidade/UF'],['Cliente','CEP','CEP'],
+ ['Cliente','EMAIL','E-mail'],['Cliente','TELEFONE','Telefone'],['Cliente','ENDERECO','Endereço completo (com complemento)'],['Cliente','COMPLEMENTO','Complemento'],['Cliente','CIDADE','Cidade'],['Cliente','UF','Estado'],['Cliente','CIDADE_UF','Cidade/UF'],['Cliente','CEP','CEP'],
  ['Cliente','NASCIMENTO','Data de nascimento'],['Cliente','DOMICILIADO','domiciliado / domiciliada'],
  ['Processo','PROCESSO','Número do processo'],['Processo','TRIBUNAL','Tribunal'],['Processo','VARA','Vara / órgão julgador'],['Processo','COMARCA','Cidade/UF do processo'],['Processo','ACAO','Tipo de ação'],['Processo','AREA','Área'],
  ['Processo','HONORARIOS','Honorários combinados (R$)'],['Processo','HONORARIOS_EXTENSO','Honorários por extenso'],
  ['Escritório','ADVOGADO','Advogado responsável'],['Escritório','OAB','OAB'],['Escritório','ESCRITORIO','Nome do escritório'],['Escritório','ENDERECO_ESCRITORIO','Endereço do escritório'],['Escritório','CIDADE_ESCRITORIO','Cidade do escritório'],
  ['Datas','DATA','Hoje (dd/mm/aaaa)'],['Datas','DATA_EXTENSO','Hoje por extenso'],['Datas','LOCAL_DATA','Cidade/UF do cliente + data por extenso'],['Datas','LOCAL_DATA_ESCRITORIO','Cidade do escritório + data por extenso']
 ];
-var WORD_CLI_CAMPOS={NACIONALIDADE:'nac',ESTADO_CIVIL:'civil',PROFISSAO:'prof',RG:'rg',EMAIL:'email',TELEFONE:'tel',ENDERECO:'end',CIDADE:'cid',UF:'uf',CEP:'cep',CPF:'doc'};
+var WORD_CLI_CAMPOS={NACIONALIDADE:'nac',ESTADO_CIVIL:'civil',PROFISSAO:'prof',RG:'rg',EMAIL:'email',TELEFONE:'tel',ENDERECO:'end',RUA_NUMERO_BAIRRO:'end',COMPLEMENTO:'compl',CIDADE:'cid',UF:'uf',CEP:'cep',CPF:'doc'};
 function dataExtenso(iso){var d=new Date((iso||todayStr)+'T12:00:00');return d.getDate()+' de '+MESES[d.getMonth()].toLowerCase()+' de '+d.getFullYear()}
 function wordDados(c,p){
   c=c||{};p=p||{};var e=escritorio(),fem=/a$/i.test((c.nac||'').trim())||/a$/i.test((c.civil||'').trim());
   var cuf=cliCidadeUF(c),d={
     CLIENTE:c.nome||'',CLIENTE_MAIUSCULO:(c.nome||'').toLocaleUpperCase('pt-BR'),NACIONALIDADE:c.nac||'',ESTADO_CIVIL:c.civil||'',PROFISSAO:c.prof||'',
-    CPF:c.doc?fmtDoc(c.doc):'',RG:c.rg||'',EMAIL:c.email||'',TELEFONE:c.tel||'',ENDERECO:c.end||'',CIDADE:c.cid||'',UF:c.uf||'',CIDADE_UF:cuf,CEP:c.cep||'',
+    CPF:c.doc?fmtDoc(c.doc):'',RG:c.rg||'',EMAIL:c.email||'',TELEFONE:c.tel||'',ENDERECO:cliEndereco(c),COMPLEMENTO:c.compl||'',RUA_NUMERO_BAIRRO:c.end||'',CIDADE:c.cid||'',UF:c.uf||'',CIDADE_UF:cuf,CEP:c.cep||'',
     NASCIMENTO:c.aniv?fmt(c.aniv):'',DOMICILIADO:fem?'domiciliada':'domiciliado',
     PROCESSO:p.num||'',TRIBUNAL:p.trib||tribPorNumero(p.num)||'',VARA:p.djOrgao||'',COMARCA:p.cid?p.cid+(p.uf?'/'+p.uf:''):'',ACAO:p.tipoAcao||p.djClasse||'',AREA:p.area||'',
     HONORARIOS:p.val?fmtM(p.val):'',HONORARIOS_EXTENSO:p.val?valorExtenso(p.val):'',
@@ -5428,7 +5471,7 @@ function abrirFichaCliente(cliId){
       (c.doc?'<div class="pf"><div class="pl">CPF/CNPJ</div><div class="pv">'+esc(fmtDoc(c.doc))+'</div></div>':'')+
       (c.tel?'<div class="pf"><div class="pl">Telefone</div><div class="pv">'+esc(c.tel)+' <a class="wa-link" onclick="conversarCliente(\''+c.id+'\')"><i class="ti ti-brand-whatsapp"></i> Conversar</a></div></div>':'')+
       (c.email?'<div class="pf"><div class="pl">E-mail</div><div class="pv">'+esc(c.email)+'</div></div>':'')+
-      ((c.end||c.cid)?'<div class="pf"><div class="pl">Endereço</div><div class="pv">'+esc([c.end,cliCidadeUF(c),c.cep].filter(Boolean).join(' · '))+'</div></div>':'')+
+      ((c.end||c.cid)?'<div class="pf"><div class="pl">Endereço</div><div class="pv">'+esc([cliEndereco(c),cliCidadeUF(c),c.cep].filter(Boolean).join(' · '))+'</div></div>':'')+
       (((c.drive&&c.drive.link)||c.driveLink)?'<div style="display:flex;gap:6px;margin-top:8px"><a class="btn bo bs" style="flex:1;justify-content:center" href="'+esc((c.drive&&c.drive.link)||c.driveLink)+'" target="_blank"><i class="ti ti-brand-google-drive" style="color:#15803d"></i> Pasta no Drive</a>'+(c.drive&&c.drive.cadLink?'<a class="btn bo bs" style="flex:1;justify-content:center" href="'+esc(c.drive.cadLink)+'" target="_blank"><i class="ti ti-file-text"></i> Cadastro no Drive</a>':'')+'</div>':(gdrAtivo()&&gdrConectado()?'<button class="btn bo bs" style="width:100%;justify-content:center;margin-top:8px" onclick="gdrPastaCliente(cliPorId(\''+c.id+'\')).then(function(){return gdrSalvarCadastro(cliPorId(\''+c.id+'\'))}).then(function(){saveAll();abrirFichaCliente(\''+c.id+'\')}).catch(gdrErro)"><i class="ti ti-brand-google-drive"></i> Criar pasta no Drive</button>':''))+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px"><button class="btn bo bs" style="justify-content:center" onclick="openCliModal(\''+c.id+'\')"><i class="ti ti-pencil"></i> Editar cadastro</button><button class="btn bo bs" style="justify-content:center" onclick="openAnexosModal(\''+c.id+'\')"><i class="ti ti-paperclip"></i> Documentos'+(docs.length?' ('+docs.length+' faltando)':anx?' ('+anx+')':'')+'</button></div></div>'+
     '<div class="dps"><h4>Processos ('+ps.length+')</h4>'+(ps.length?ps.map(function(p){var cid=kbColDe(p,qProc),col=qProc.cols.filter(function(x){return x.id===cid})[0]||{};return'<div class="fc-proc"><div style="flex:1;min-width:0;cursor:pointer" onclick="openPanel(\''+p.id+'\')"><div class="fc-tar-t">'+esc(p.tipoAcao||p.area||'Processo')+'</div><div class="fc-tar-s">'+esc([p.num,p.trib,p.st].filter(Boolean).join(' · '))+'</div></div><select class="fc-fase" style="border-left:4px solid '+(col.cor||'#64748b')+'" onchange="kbMoverProc(\''+p.id+'\',this.value)" title="Fase no quadro de processos">'+qProc.cols.map(function(x){return'<option value="'+x.id+'"'+(x.id===cid?' selected':'')+'>'+esc(x.nome)+'</option>'}).join('')+'</select></div>'}).join(''):'<div style="font-size:12px;color:var(--text3)">Nenhum processo.</div>')+'</div>'+
@@ -5496,7 +5539,7 @@ function gdrCadastroHtml(c){
   return'<html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif">'+
     '<h2 style="color:#7b1a2a">'+esc(c.nome)+'</h2><p style="color:#7a5060;font-size:11px">Ficha copiada do sistema '+esc(escritorio().nome)+'. Para alterar, use o sistema — este arquivo é atualizado automaticamente.</p>'+
     '<table>'+l('CPF/CNPJ',c.doc?fmtDoc(c.doc):'')+l('Tipo',c.tipo)+l('RG',c.rg)+l('Nacionalidade',c.nac)+l('Estado civil',c.civil)+l('Profissão',c.prof)+l('Nascimento',c.aniv?fmt(c.aniv):'')+
-      l('Telefone',c.tel)+l('E-mail',c.email)+l('Endereço',c.end)+l('Cidade/UF',cliCidadeUF(c))+l('CEP',c.cep)+l('Como conheceu',c.origem)+l('Observações',c.obs)+'</table>'+
+      l('Telefone',c.tel)+l('E-mail',c.email)+l('Endereço',cliEndereco(c))+l('Cidade/UF',cliCidadeUF(c))+l('CEP',c.cep)+l('Como conheceu',c.origem)+l('Observações',c.obs)+'</table>'+
     (ps.length?'<h3 style="color:#7b1a2a">Processos</h3><ul>'+ps.map(function(p){return'<li>'+esc([p.num||'(sem número)',p.tipoAcao||p.area,p.trib,p.st].filter(Boolean).join(' · '))+'</li>'}).join('')+'</ul>':'')+
     (docs.length?'<h3 style="color:#7b1a2a">Documentos que o cliente ainda precisa trazer</h3><ul>'+docs.map(function(d){return'<li>'+esc(d.nome)+'</li>'}).join('')+'</ul>':'')+
   '</body></html>';
