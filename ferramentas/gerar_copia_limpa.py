@@ -76,6 +76,8 @@ rep('https://crm-guerra-torres.vercel.app', 'https://seu-escritorio.vercel.app')
 rep('// "Dr. Paulo", "paulo henrique", "Paulo H. B. Torres" → "Paulo Henrique Braga Torres"', '// "Dr. Fulano", "fulano de tal" → nome completo cadastrado na equipe')
 rep('(modelo padrão Guerra & Torres)', '(modelo padrão)')
 
+rep("var E2_TRAT={allane:'Dra.'};", "var E2_TRAT={};")
+
 # --- a peça-modelo do escritório não vai junto ---
 rep('function seedMinutaPadrao(){', 'function seedMinutaPadrao(){return;')
 

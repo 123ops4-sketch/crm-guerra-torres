@@ -6261,9 +6261,10 @@ var E2_SALAS=[
   {id:'intim',nome:'Intimações',x:96,y:0,w:96,h:96,piso:['#cfd8e3','#c3cedb'],cima:true},
   {id:'agenda',nome:'Prazos e Agenda',x:192,y:0,w:96,h:96,piso:['#ddd3ea','#d2c6e3'],cima:true},
   {id:'fin',nome:'Financeiro',x:288,y:0,w:96,h:96,piso:['#d3e6d4','#c6dcc8'],cima:true},
-  {id:'arq',nome:'Arquivo e Processos',x:0,y:128,w:128,h:96,piso:['#e9dcc6','#dfd0b6']},
-  {id:'biblio',nome:'Biblioteca',x:128,y:128,w:128,h:96,piso:['#d7e4e2','#cbdcd9']},
-  {id:'dir',nome:'Diretoria',x:256,y:128,w:128,h:96,piso:['#ecd6d9','#e3c8cc']}
+  {id:'arq',nome:'Arquivo e Processos',x:0,y:128,w:96,h:96,piso:['#e9dcc6','#dfd0b6']},
+  {id:'biblio',nome:'Biblioteca',x:96,y:128,w:96,h:96,piso:['#d7e4e2','#cbdcd9']},
+  {id:'dir',nome:'Diretoria',x:192,y:128,w:96,h:96,piso:['#ecd6d9','#e3c8cc']},
+  {id:'advs',nome:'Advogados',x:288,y:128,w:96,h:96,piso:['#e7dcc9','#ddd0b9']}
 ];
 function e2Sala(id){return E2_SALAS.filter(function(s){return s.id===id})[0]}
 function e2Porta(s){var cx=s.x+Math.round(s.w/2);return s.cima?{dentro:{x:cx,y:s.y+s.h-12},corr:{x:cx,y:112}}:{dentro:{x:cx,y:s.y+14},corr:{x:cx,y:112}}}
@@ -6273,11 +6274,19 @@ var E2_PONTOS={
   intim:{mesa:{x:126,y:40},est:{x:172,y:58},estTipo:'pc'},
   agenda:{mesa:{x:222,y:40},est:{x:268,y:58},estTipo:'quadro'},
   fin:{mesa:{x:318,y:40},est:{x:364,y:58},estTipo:'cofre'},
-  arq:{mesa:{x:32,y:174},est:{x:100,y:182},estTipo:'arquivo'},
-  biblio:{mesa:{x:160,y:174},est:{x:228,y:182},estTipo:'estante'},
-  dir:{mesa:{x:284,y:174},est:{x:352,y:182},estTipo:'impressora'}
+  arq:{mesa:{x:26,y:174},est:{x:72,y:182},estTipo:'arquivo'},
+  biblio:{mesa:{x:122,y:174},est:{x:166,y:182},estTipo:'estante'},
+  dir:{mesa:{x:218,y:174},est:{x:262,y:182},estTipo:'impressora'}
 };
-var E2_ENTREGA={x:336,y:206};// em frente à sua mesa, na Diretoria
+var E2_ENTREGA={x:336,y:206};// na sala dos advogados, em frente às mesas
+// tratamento dos advogados da sala (Dr./Dra.): nomes da equipe em Configurações › Equipe
+var E2_TRAT={allane:'Dra.'};
+function e2Advogados(){
+  var l=(typeof equipeLista==='function'?equipeLista():[]).slice(0,2),pos=[312,360],roupas=[['#1f2937','#111827','#e0ac69',false],['#5b1220','#3b2314','#f1c27d',true]];
+  return l.map(function(n,i){var pn=primeiroNome(n),k=normTxt(pn),fem=E2_TRAT[k]==='Dra.'||(E2_TRAT[k]!=='Dr.'&&/a$/.test(k));var r=roupas[i];
+    return{rot:(E2_TRAT[k]||(fem?'Dra.':'Dr.'))+' '+pn,x:pos[i]+(l.length===1?24:0),y:166,camisa:r[0],cabelo:r[1],pele:r[2],longo:fem,dir:i?-1:1,frame:0,sentado:true}});
+}
+function e2SalaAdvNome(){var a=e2Advogados();return a.length?a.map(function(x){return x.rot}).join(' e '):'Advogados'}
 var E2_EQUIPE=[
   {id:'rita',nome:'Rita',cargo:'Recepção',sala:'recep',camisa:'#db2777',cabelo:'#3b2314',pele:'#f1c27d',longo:true},
   {id:'davi',nome:'Davi',cargo:'Intimações',sala:'intim',camisa:'#2563eb',cabelo:'#111827',pele:'#c68642'},
@@ -6516,7 +6525,7 @@ function e2Concluir(f){
   var r=f.res,t=f.tarefa;f.res=null;f.tarefa=null;e2Registrar(f,t,r);
   if(!document.getElementById('e2-cv'))toast(f.nome+': '+r.txt,r.erro?'danger':'ok');
   f.estado='entregando';e2Balao(f,r.txt,3.5);
-  e2Ir(f,e2Rota(f,{x:E2_ENTREGA.x+(Math.random()*16-8)|0,y:E2_ENTREGA.y},e2Sala('dir')),function(){
+  e2Ir(f,e2Rota(f,{x:E2_ENTREGA.x+(Math.random()*16-8)|0,y:E2_ENTREGA.y},e2Sala('advs')),function(){
     e2Balao(f,r.txt,3);f.estado='voltando';
     if(f.fila.length){f.estado='parado';return}
     var m=E2_PONTOS[f.sala].mesa;e2Ir(f,e2Rota(f,m,e2Sala(f.sala)),function(){f.estado='parado';f.sentado=true;f.dir=1});
@@ -6592,7 +6601,7 @@ function renderEscritorio2D(){
   var cv=document.getElementById('e2-cv');E2.cv=cv;E2.ctx=cv.getContext?cv.getContext('2d'):null;E2.semCtx=!E2.ctx;
   if(E2.ctx){E2.ctx.imageSmoothingEnabled=false}
   document.getElementById('e2-ov').innerHTML=E2.func.map(function(f){return'<div class="e2-tag" id="e2-tag-'+f.id+'"><span class="e2-nome">'+esc(f.nome)+'</span><span class="e2-bal hidden"></span><span class="e2-prog hidden"><i></i></span></div>'}).join('')+
-    E2_SALAS.map(function(s){return'<div class="e2-sala" style="left:'+((s.x+4)/E2_W*100)+'%;top:'+((s.cima?s.y+4:s.y+8)/E2_H*100)+'%">'+esc(s.nome)+'</div>'}).join('')+'<div class="e2-voce" style="left:'+(336/E2_W*100)+'%;top:'+(150/E2_H*100)+'%">VOCÊ</div>';
+    E2_SALAS.map(function(s){return'<div class="e2-sala" style="left:'+((s.x+4)/E2_W*100)+'%;top:'+((s.cima?s.y+4:s.y+8)/E2_H*100)+'%">'+esc(s.nome)+'</div>'}).join('')+e2Advogados().map(function(a){return'<div class="e2-voce" style="left:'+(a.x/E2_W*100)+'%;top:'+((a.y-25)/E2_H*100)+'%">'+esc(a.rot)+'</div>'}).join('');
   e2Equipe();e2LogDesenhar();E2.rodando=false;e2Garantir();
 }
 function e2Equipe(){
@@ -6631,8 +6640,9 @@ function e2Desenhar(){
   // corredor: café e plantas
   e2Planta(c,6,100);e2Planta(c,370,100);e2Ret(c,186,98,12,10,'#374151');e2Ret(c,188,100,8,3,'#ef4444');e2Ret(c,190,104,4,3,'#f5f5f4');
   // você
-  e2Boneco(c,{x:336,y:166,dir:1,frame:0,camisa:'#3d0b15',cabelo:'#1f2937',pele:'#e0ac69',sentado:true},false);
-  e2Ret(c,312,170,48,14,'#7c4a21');e2Ret(c,312,170,48,3,'#9a6332');e2Ret(c,330,172,12,7,'#111827');e2Ret(c,331,173,10,4,'#60a5fa');
+  // sala dos advogados
+  e2Planta(c,372,140);e2Ret(c,296,140,26,14,'#7c4a21');for(var bk=0;bk<6;bk++)e2Ret(c,298+bk*4,142,3,10,['#9b2235','#1d4ed8','#c9a84c'][bk%3]);e2Ret(c,312,206,48,10,'#9b2235');e2Ret(c,314,208,44,6,'#b8394f');
+  e2Advogados().forEach(function(a){e2Boneco(c,a,false);e2Mesa(c,a.x,a.y+4)});
   // equipe (ordenada por y)
   E2.func.slice().sort(function(a,b){return a.y-b.y}).forEach(function(f){
     var trab=f.estado==='trabalhando',pts=E2_PONTOS[f.sala];
@@ -6644,6 +6654,7 @@ function e2Desenhar(){
 function e2Mesa(c,x,y,cor){e2Ret(c,x-16,y,32,12,'#7c4a21');e2Ret(c,x-16,y,32,3,'#9a6332');e2Ret(c,x-6,y+2,12,7,'#111827');e2Ret(c,x-5,y+3,10,4,(Math.floor(E2.t*2)%2)?'#93c5fd':'#60a5fa');e2Ret(c,x+8,y+4,4,3,'#f5f5f4')}
 function e2Planta(c,x,y){e2Ret(c,x,y+8,8,6,'#92400e');e2Ret(c,x-2,y,12,9,'#16a34a');e2Ret(c,x,y-3,8,5,'#22c55e')}
 function e2Moveis(c,s){
+  if(!E2_PONTOS[s.id])return;
   var p=E2_PONTOS[s.id],e=p.est,m=p.mesa,anim=Math.floor(E2.t*3)%2;
   // mesa vazia (quando o funcionário saiu)
   var f=E2.func.filter(function(x){return x.sala===s.id})[0];if(!f||!(f.sentado&&!f.caminho.length))e2Mesa(c,m.x,m.y+4);
@@ -6652,9 +6663,9 @@ function e2Moveis(c,s){
   if(p.estTipo==='pc'){e2Ret(c,e.x-12,e.y-18,24,10,'#7c4a21');e2Ret(c,e.x-6,e.y-26,12,9,'#111827');e2Ret(c,e.x-5,e.y-25,10,6,(f&&f.estado==='trabalhando'&&anim)?'#fde68a':'#22d3ee');e2Ret(c,s.x+6,s.y+18,10,30,'#6b7280');e2Ret(c,s.x+7,s.y+20,8,2,'#d1d5db');e2Ret(c,s.x+7,s.y+28,8,2,'#d1d5db')}
   if(p.estTipo==='quadro'){e2Ret(c,e.x-14,s.y+16,28,20,'#f5f5f4');e2Ret(c,e.x-14,s.y+16,28,3,'#7c3aed');for(var i=0;i<4;i++)for(var j=0;j<3;j++)e2Ret(c,e.x-12+i*7,s.y+21+j*5,5,3,(i+j)%3===0?'#fca5a5':'#e5e7eb');e2Planta(c,s.x+80,s.y+70)}
   if(p.estTipo==='cofre'){e2Ret(c,e.x-9,e.y-24,18,18,'#374151');e2Ret(c,e.x-7,e.y-22,14,14,'#4b5563');e2Ret(c,e.x-2,e.y-17,4,4,'#c9a84c');e2Ret(c,s.x+8,s.y+66,12,10,'#15803d');e2Ret(c,s.x+10,s.y+68,8,2,'#bbf7d0')}
-  if(p.estTipo==='arquivo'){for(var k=0;k<3;k++){e2Ret(c,s.x+60+k*16,s.y+12,14,26,'#9ca3af');[0,1,2].forEach(function(i){e2Ret(c,s.x+62+k*16,s.y+16+i*7,10,1,'#4b5563')})}e2Ret(c,s.x+10,s.y+70,18,10,'#d6b98c');e2Ret(c,s.x+12,s.y+66,14,5,'#e8d3b0')}
-  if(p.estTipo==='estante'){for(var k2=0;k2<4;k2++){e2Ret(c,s.x+50+k2*18,s.y+10,16,28,'#7c4a21');for(var r=0;r<3;r++)for(var b=0;b<4;b++)e2Ret(c,s.x+52+k2*18+b*3,s.y+13+r*8,2,6,['#9b2235','#1d4ed8','#15803d','#c9a84c'][(b+r+k2)%4])}e2Ret(c,s.x+10,s.y+66,20,14,'#0f766e');e2Ret(c,s.x+12,s.y+68,16,2,'#99f6e4')}
-  if(p.estTipo==='impressora'){e2Ret(c,e.x-9,e.y-20,18,12,'#e5e7eb');e2Ret(c,e.x-7,e.y-24,14,5,'#9ca3af');if(f&&f.estado==='trabalhando')e2Ret(c,e.x-5,e.y-8+anim*2,10,4,'#ffffff');e2Planta(c,s.x+8,s.y+14);e2Ret(c,s.x+40,s.y+76,48,8,'#c9a84c')}
+  if(p.estTipo==='arquivo'){for(var k=0;k<2;k++){e2Ret(c,s.x+58+k*16,s.y+12,14,26,'#9ca3af');[0,1,2].forEach(function(i){e2Ret(c,s.x+60+k*16,s.y+16+i*7,10,1,'#4b5563')})}e2Ret(c,s.x+10,s.y+70,18,10,'#d6b98c');e2Ret(c,s.x+12,s.y+66,14,5,'#e8d3b0')}
+  if(p.estTipo==='estante'){for(var k2=0;k2<2;k2++){e2Ret(c,s.x+52+k2*18,s.y+10,16,28,'#7c4a21');for(var r=0;r<3;r++)for(var b=0;b<4;b++)e2Ret(c,s.x+54+k2*18+b*3,s.y+13+r*8,2,6,['#9b2235','#1d4ed8','#15803d','#c9a84c'][(b+r+k2)%4])}e2Ret(c,s.x+10,s.y+66,20,14,'#0f766e');e2Ret(c,s.x+12,s.y+68,16,2,'#99f6e4')}
+  if(p.estTipo==='impressora'){e2Ret(c,e.x-9,e.y-20,18,12,'#e5e7eb');e2Ret(c,e.x-7,e.y-24,14,5,'#9ca3af');if(f&&f.estado==='trabalhando')e2Ret(c,e.x-5,e.y-8+anim*2,10,4,'#ffffff');e2Planta(c,s.x+8,s.y+14);e2Ret(c,s.x+24,s.y+78,48,8,'#c9a84c')}
 }
 function e2Boneco(c,f,trab){
   var x=Math.round(f.x),y=Math.round(f.y),fr=f.frame,d=f.dir||1;
