@@ -465,6 +465,13 @@ body.com-crono{padding-bottom:76px}
 .e2-item-t{font-size:12px;font-weight:600;margin:5px 0 2px}.e2-item-c{font-size:12px;color:var(--text2);line-height:1.5}.e2-item-c a{cursor:pointer;color:var(--wine)}
 .e2-item-a{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.e2-ul{margin:4px 0 0 16px;padding:0}.e2-ul li{margin:2px 0}.e2-ul li.e2-venc{color:#b91c1c}.e2-mais{font-size:11px;color:var(--text3);margin-top:2px}
 .e2-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:4px}.e2-kpis span{background:var(--cream);border-radius:6px;padding:6px 8px;font-size:10px;color:var(--text3)}.e2-kpis b{display:block;font-size:13px;color:var(--text)}
+.dl-chamada{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--cream);border:1px dashed var(--gold);border-radius:var(--r);padding:8px 10px}.dl-chamada span{font-size:11px;color:var(--text3)}
+.dl-drop{border:2px dashed var(--border2);border-radius:var(--r2);padding:22px;text-align:center;cursor:pointer;display:flex;flex-direction:column;gap:4px;align-items:center;background:var(--white)}.dl-drop i{font-size:30px;color:var(--wine)}.dl-drop span{font-size:12px;color:var(--text3)}.dl-drop.sobre,.dl-drop:hover{border-color:var(--gold);background:var(--cream)}
+.dl-arq{display:flex;align-items:center;gap:8px;font-size:12px;border:1px solid var(--border);border-radius:8px;padding:6px 9px;margin-top:6px}.dl-arq span:first-of-type{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dl-arq select{font-size:11px;width:auto}.dl-ok{color:#15803d;font-weight:600}
+.dl-res-h{font-size:12px;margin:12px 0 6px;color:var(--text2)}.dl-tab{width:100%;border-collapse:collapse;font-size:12px}.dl-tab td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top}.dl-tab td:first-child{width:24px}.dl-tab td:nth-child(2){width:32%;font-weight:600;color:var(--text2);padding-top:10px}.dl-tab input[type=text],.dl-tab input[type=date]{width:100%;box-sizing:border-box;background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:5px 7px}.dl-tab tr.vazio input{background:var(--white);border-color:var(--border2)}.dl-atual{font-size:10px;color:#b45309;margin-top:2px}
+.dl-outros{font-size:11px;margin-top:10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}.dl-outros b{width:100%}.dl-texto{margin-top:10px;font-size:11px}.dl-texto summary{cursor:pointer;color:var(--text3)}.dl-texto pre{white-space:pre-wrap;max-height:200px;overflow:auto;background:var(--cream);padding:8px;border-radius:6px;font-size:10px}
+.doc-lido{background:#fef9c3!important;border-color:#facc15!important}
+#mDocLer{z-index:260}
 .pz-aud-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .cli-tipo{display:flex;gap:8px;flex-wrap:wrap}.cli-tipo label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);border-radius:var(--r);padding:7px 12px;cursor:pointer;font-size:13px;font-weight:600;margin:0;background:var(--white)}.cli-tipo label:has(input:checked){border-color:var(--gold);background:var(--cream);color:var(--wine)}.cli-tipo input{width:auto;margin:0}
 .jp-fontes{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -718,6 +725,18 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 <div class="mf"><button class="btn bo" onclick="closeModal('mFin')">Cancelar</button><button class="btn bp" id="ff-salvar" onclick="saveFin()"><i class="ti ti-check"></i> Salvar</button></div>
 </div></div>
 
+<div id="mDocLer" class="overlay hidden" onclick="if(event.target.id==='mDocLer')closeModal('mDocLer')">
+<div class="modal" style="max-width:720px"><div class="mh"><h2><i class="ti ti-scan"></i> Ler documentos <span class="badge b-aguardando" style="font-size:10px;vertical-align:middle">teste</span></h2><button class="btn bo bs" onclick="closeModal('mDocLer')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
+<div class="mb">
+  <div class="dl-drop" ondragover="event.preventDefault();this.classList.add('sobre')" ondragleave="this.classList.remove('sobre')" ondrop="dlSoltar(event)" onclick="document.getElementById('dl-file').click()"><i class="ti ti-file-upload"></i><b>Arraste aqui a identidade e o comprovante de endereço</b><span>Foto (JPG, PNG) ou PDF · ou clique para escolher</span><input type="file" id="dl-file" accept="image/*,.pdf,application/pdf" multiple style="display:none" onchange="dlAdd(this.files);this.value=''"></div>
+  <div id="dl-arqs"></div>
+  <details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--wine)">Ou cole o texto do documento (do PDF, do WhatsApp ou copiado pelo celular)</summary><textarea id="dl-colar" style="width:100%;min-height:90px;margin-top:6px;font-size:12px" placeholder="Cole aqui o texto da identidade e/ou do comprovante"></textarea></details>
+  <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5"><i class="ti ti-lock"></i> A leitura acontece no seu navegador: o documento não é enviado para nenhum serviço. PDFs com texto são lidos na hora; fotos levam alguns segundos (na 1ª vez o leitor baixa uns 10 MB).</div>
+  <div id="dl-status" style="font-size:12px;margin-top:8px;color:var(--wine)"></div>
+  <div id="dl-res"></div>
+</div>
+<div class="mf"><button class="btn bo" onclick="closeModal('mDocLer')">Cancelar</button><button class="btn bo" onclick="dlLer()"><i class="ti ti-scan"></i> Ler</button><button class="btn bp" id="dl-aplicar" style="display:none" onclick="dlAplicar()"><i class="ti ti-check"></i> Preencher o cadastro</button></div>
+</div></div>
 <div id="mHonAv" class="overlay hidden" onclick="if(event.target.id==='mHonAv')closeModal('mHonAv')">
 <div class="modal" style="max-width:560px"><div class="mh"><h2 id="mHonAvT">Honorários sem processo</h2><button class="btn bo bs" onclick="closeModal('mHonAv')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
 <div class="mb"><div style="font-size:12px;color:var(--text2);background:var(--cream);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;line-height:1.6">Para serviços que não viraram processo: consulta, contrato, requerimento ao INSS, acordo extrajudicial, assessoria. A conta funciona igual à de um processo: parcelas, pagamentos parciais, descontos e recibo.</div>
@@ -777,6 +796,7 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 <div class="modal"><div class="mh"><h2 id="mCliT">Novo cliente</h2><button class="btn bo bs" onclick="closeModal('mCliente')"><i class="ti ti-x"></i></button></div>
 <div class="mb"><div class="fg">
   <div class="sl">Identificação</div>
+  <div class="fgr full dl-chamada"><button type="button" class="btn bo" onclick="openDocLer()"><i class="ti ti-scan"></i> Ler documentos (RG/CNH e comprovante de endereço)</button><span>Preenche o cadastro a partir da foto, PDF ou texto do documento. <b>Versão de teste.</b></span></div>
   <div class="fgr full"><label>Tipo de cliente</label><div class="cli-tipo" role="radiogroup"><label><input type="radio" name="fc-tipo-r" value="Pessoa Física" onchange="cliTipoMudou(this.value)" checked> <i class="ti ti-user"></i> Pessoa física (CPF)</label><label><input type="radio" name="fc-tipo-r" value="Pessoa Jurídica" onchange="cliTipoMudou(this.value)"> <i class="ti ti-building"></i> Empresa (CNPJ)</label></div><input type="hidden" id="fc-tipo" value="Pessoa Física"></div>
   <div class="fgr full"><label id="fc-nome-l">Nome *</label><input id="fc-nome"></div>
   <div class="fgr"><label id="fc-doc-l">CPF</label><input id="fc-doc" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" oninput="cliDocDigitado(this)" onblur="cliChecaDuplicado()"><div class="ac-hint" id="fc-doc-hint"></div></div>
@@ -6731,6 +6751,200 @@ function e2Overlay(){
     if(b.textContent!==txt)b.textContent=txt;b.classList.toggle('hidden',!txt);
     var trab=f.estado==='trabalhando';pr.classList.toggle('hidden',!trab);if(trab){var pc=f.res?100:Math.min(90,(E2.t-f.ini)/Math.max(0.6,f.dur||1)*90);pr.firstChild.style.width=pc+'%'}
   });
+}
+
+// ===================== LER DOCUMENTOS (identidade e comprovante de endereço) — VERSÃO DE TESTE =====================
+// Lê PDF com texto (PDF.js), foto/digitalização (Tesseract, no próprio navegador) ou texto colado,
+// e sugere os campos do cadastro para conferência. Nada é salvo sem o usuário revisar.
+var DL={docs:[],campos:null,lendo:false};
+var DL_LIBS={pdf:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',pdfWorker:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  tess:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',tessWorker:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',tessCore:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',tessLang:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/por@1.0.0/4.0.0_best_int'};
+function dlScript(src,teste){return new Promise(function(res,rej){if(teste())return res();var s=document.createElement('script');s.src=src;s.onload=function(){teste()?res():rej(new Error('biblioteca não carregou'))};s.onerror=function(){rej(new Error('Sem internet para carregar o leitor de documentos.'))};document.head.appendChild(s)})}
+function dlPdfLib(){return dlScript(DL_LIBS.pdf,function(){return!!window.pdfjsLib}).then(function(){window.pdfjsLib.GlobalWorkerOptions.workerSrc=DL_LIBS.pdfWorker})}
+function dlTessLib(){return dlScript(DL_LIBS.tess,function(){return!!window.Tesseract})}
+function dlStatus(t,pct){var el=document.getElementById('dl-status');if(el)el.innerHTML=t?'<i class="ti ti-loader-2 calc-spin"></i> '+esc(t)+(pct!=null?' <b>'+Math.round(pct)+'%</b>':''):''}
+// ---------- leitura ----------
+function dlOcr(fonte,nome){
+  return dlTessLib().then(function(){
+    return Tesseract.createWorker('por',1,{workerPath:DL_LIBS.tessWorker,corePath:DL_LIBS.tessCore,langPath:DL_LIBS.tessLang,
+      logger:function(m){if(m.status==='recognizing text')dlStatus('Lendo '+nome+'…',m.progress*100);else if(/load/.test(m.status))dlStatus('Preparando o leitor (só na 1ª vez demora)…',m.progress*100)}});
+  }).then(function(w){return w.recognize(fonte).then(function(r){w.terminate();return r.data.text||''},function(e){w.terminate();throw e})});
+}
+function dlLerPdf(buf,nome){
+  return dlPdfLib().then(function(){return pdfjsLib.getDocument({data:buf}).promise}).then(function(pdf){
+    var n=Math.min(pdf.numPages,4),ps=[];for(var i=1;i<=n;i++)ps.push(pdf.getPage(i));
+    return Promise.all(ps).then(function(pages){
+      return Promise.all(pages.map(function(pg){return pg.getTextContent().then(function(tc){
+        // monta linhas pela posição vertical
+        var linhas={};tc.items.forEach(function(it){var y=Math.round(it.transform[5]/3);(linhas[y]=linhas[y]||[]).push(it)});
+        return Object.keys(linhas).sort(function(a,b){return b-a}).map(function(y){return linhas[y].sort(function(a,b){return a.transform[4]-b.transform[4]}).map(function(i){return i.str}).join(' ').replace(/\s+/g,' ').trim()}).filter(Boolean).join('\n');
+      })})).then(function(txts){
+        var t=txts.join('\n');if(t.replace(/\s/g,'').length>40)return{texto:t,via:'pdf'};
+        // PDF digitalizado (só imagem): desenha a 1ª página e lê como foto
+        var pg=pages[0],vp=pg.getViewport({scale:2.2}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+        return pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise.then(function(){return dlOcr(cv,nome)}).then(function(tx){return{texto:tx,via:'ocr'}});
+      });
+    });
+  });
+}
+function dlLerArquivo(f){
+  return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result)};r.onerror=function(){rej(new Error('Não consegui abrir '+f.name))};
+    if(/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name))r.readAsArrayBuffer(f);else r.readAsDataURL(f)}).then(function(dado){
+    if(dado instanceof ArrayBuffer)return dlLerPdf(new Uint8Array(dado),f.name);
+    return dlOcr(dado,f.name).then(function(t){return{texto:t,via:'ocr'}});
+  });
+}
+// ---------- interpretação ----------
+var DL_UFS='AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO';
+function dlLimpar(t){return String(t||'').replace(/\r/g,'').replace(/[‐-―]/g,'-').replace(/[ \t]+/g,' ')}
+// corrige trocas comuns do OCR dentro de sequências numéricas (O→0, I/l→1, S→5, B→8)
+function dlDigitos(s){return String(s).replace(/[OoQD]/g,'0').replace(/[Il|]/g,'1').replace(/S/g,'5').replace(/B/g,'8')}
+function dlTipoTexto(t){var n=normTxt(t);var end=/(fatura|conta de (luz|agua|energia)|consumo|kwh|vencimento|leitura|unidade consumidora|instalacao|saneamento|energia|telefon|internet|banco|extrato|comprovante de (residencia|endereco)|cep)/.test(n),id=/(registro geral|carteira de identidade|habilitacao|cnh|filiacao|doc\.? identidade|data de nascimento|nascimento|cpf)/.test(n);
+  if(id&&!/(fatura|conta de|kwh|consumo|vencimento)/.test(n))return'id';if(end)return'end';return id?'id':'end'}
+function dlCpf(t){
+  var c=[],re=/(\d[\dOoIlSB]{2})[.\s]?([\dOoIlSB]{3})[.\s]?([\dOoIlSB]{3})\s?[-.\s]?\s?([\dOoIlSB]{2})/g,m;
+  while((m=re.exec(t))){var d=soDigitos(dlDigitos(m[1]+m[2]+m[3]+m[4]));if(d.length===11)c.push(d)}
+  var ok=c.filter(cpfValido);return ok[0]||null;
+}
+function dlDatas(t){var l=[],re=/\b(\d{2})\s?\/\s?(\d{2})\s?\/\s?(\d{4})\b/g,m;while((m=re.exec(t)))l.push({iso:m[3]+'-'+m[2]+'-'+m[1],i:m.index});return l}
+function dlLinhas(t){return dlLimpar(t).split('\n').map(function(x){return x.trim()}).filter(Boolean)}
+function dlDepoisDe(linhas,re,maxL){for(var i=0;i<linhas.length;i++){var m=linhas[i].match(re);if(m){var resto=linhas[i].slice(m.index+m[0].length).replace(/^[\s:\-–\/]+/,'').replace(/^(NAME|SURNAME|GIVEN NAMES?|DATE OF BIRTH|PLACE OF BIRTH)\b[\s:\-–\/]*/i,'').trim();if(resto.length>=3)return resto;for(var k=1;k<=(maxL||2);k++){var nx=linhas[i+k];if(nx&&nx.length>=3&&!/^[A-ZÀ-Ú\s\/.]{0,6}(DATA|DOC|CPF|RG|NASC|FILIA|N[ºO°]|VALIDADE|CATEGORIA)/i.test(nx))return nx}}}return''}
+function dlTituloNome(n){return jpTitulo(String(n||'').replace(/[^A-Za-zÀ-ú'\s]/g,' ').replace(/\s+/g,' ').trim())}
+function dlIdentidade(t){
+  var o={},L=dlLinhas(t),T=dlLimpar(t),u=T.toUpperCase();
+  var cpf=dlCpf(T);if(cpf)o.cpf=cpf;
+  // nome
+  var nome=dlDepoisDe(L,/\bNOME(\s+E\s+SOBRENOME|\s*\/\s*NAME|\s+CIVIL)?\b/i,2);
+  if(nome&&/^[A-Za-zÀ-ú'\s]{5,}$/.test(nome.replace(/\s+\d.*$/,''))&&nome.trim().split(/\s+/).length>=2)o.nome=dlTituloNome(nome.replace(/\s+\d.*$/,''));
+  // data de nascimento
+  var dn=T.match(/(DATA\s*(DE\s*)?NASC(IMENTO)?|NASCIMENTO|DATE OF BIRTH)[^\d]{0,40}(\d{2})\s?\/\s?(\d{2})\s?\/\s?(\d{4})/i);
+  if(dn)o.nasc=dn[6]+'-'+dn[5]+'-'+dn[4];
+  else{var hoje=+todayStr.slice(0,4),ds=dlDatas(T).filter(function(d){var y=+d.iso.slice(0,4);return y>1900&&y<=hoje-14}).sort(function(a,b){return a.iso.localeCompare(b.iso)});if(ds.length)o.nasc=ds[0].iso}
+  // RG e órgão
+  var org=u.match(new RegExp('\\b(SSP|SESP|SDS|SEDS|SSPDS|SJS|SJTC|PC|PCMG|PCGO|DGPC|IIRGD|IFP|DETRAN|DIC|SESDC|SEJUSP|POLITEC|IGP|IPF|CGP)\\s*[\\/\\-]?\\s*('+DL_UFS+')\\b'));
+  var rgm=T.match(/(REGISTRO\s+GERAL|DOC\.?\s*IDENTIDADE[^\n\d]{0,30}|\bR\.?\s?G\.?\b|IDENTIDADE)[^\d\n]{0,15}([\dOoIlSB][\dOoIlSB.\-\s]{4,14}[\dXx])/i);
+  if(rgm){var rg=dlDigitos(rgm[2]).replace(/\s+/g,'').replace(/[.\-]+$/,'');if(soDigitos(rg).length>=5&&soDigitos(rg)!==cpf)o.rg=rg+(org?' '+org[1]+'/'+org[2]:'')}
+  else if(org){var antes=u.slice(Math.max(0,org.index-25),org.index).match(/([\d.\-]{5,14})\s*$/);if(antes)o.rg=antes[1].replace(/[.\-]+$/,'')+' '+org[1]+'/'+org[2]}
+  // filiação, naturalidade, nacionalidade
+  var fi=T.match(/FILIA[ÇC][ÃA]O[ \t:]*\n?([A-ZÀ-Ú][A-ZÀ-Ú' ]{4,60})\n([A-ZÀ-Ú][A-ZÀ-Ú' ]{4,60})/);
+  if(fi)o.filiacao=dlTituloNome(fi[1])+' e '+dlTituloNome(fi[2]);
+  var nat=T.match(new RegExp('(NATURALIDADE|LOCAL DE NASCIMENTO)[ \\t:]+([A-ZÀ-Ú][A-ZÀ-Ú ]{2,40}?)\\s*[-\\/,]\\s*('+DL_UFS+')\\b'))||T.match(new RegExp('(NATURALIDADE|LOCAL DE NASCIMENTO)[^\\n]*\\n([A-ZÀ-Ú][A-ZÀ-Ú ]{2,40}?)\\s*[-\\/,]\\s*('+DL_UFS+')\\b'));
+  if(nat)o.natural=dlTituloNome(nat[2])+'/'+nat[3];
+  if(/NACIONALIDADE[\s:]*BRASILEIR/i.test(T)||/REP[ÚU]BLICA FEDERATIVA DO BRASIL/i.test(T))o.nac='brasileiro(a)';
+  if(/CARTEIRA NACIONAL DE HABILITA|\bCNH\b|HABILITA[ÇC][ÃA]O/i.test(T))o.tipoDoc='CNH';else if(/REGISTRO GERAL|CARTEIRA DE IDENTIDADE/i.test(T))o.tipoDoc='RG';
+  return o;
+}
+var DL_LOGR='(RUA|R\\.|AVENIDA|AV\\.?|ALAMEDA|AL\\.|TRAVESSA|TV\\.|TRAV\\.?|RODOVIA|ROD\\.|ESTRADA|EST\\.|PRA[ÇC]A|P[ÇC]A\\.?|LARGO|VIELA|BECO|QUADRA|QD\\.?|CH[ÁA]CARA|FAZENDA|S[ÍI]TIO|LOTEAMENTO)';
+function dlEnderecos(t,nomeCli){
+  var L=dlLinhas(t),T=L.join('\n'),U=T.toUpperCase(),cands=[],re=/\b(\d{2})[.\s]?(\d{3})\s?-?\s?(\d{3})\b/g,m;
+  var nomeIdx=-1;if(nomeCli){var nk=normTxt(nomeCli).split(' ').slice(0,2).join(' ');nomeIdx=normTxt(T).indexOf(nk)}
+  while((m=re.exec(T))){
+    var cep=m[1]+m[2]+'-'+m[3];if(/^0/.test(cep))continue;
+    // linha do CEP e as anteriores
+    var ini=T.lastIndexOf('\n',m.index)+1,li=T.slice(0,ini).split('\n').length-1,bloco=L.slice(Math.max(0,li-4),li+2),B=bloco.join(' | ').toUpperCase();
+    if(/CNPJ|CPF\/CNPJ.*EMPRESA|INSCRI[ÇC][ÃA]O ESTADUAL|SAC|OUVIDORIA|WWW\.|\.COM\b/.test(B)&&!/(CLIENTE|UNIDADE|INSTALA|ENTREGA|CONSUMO)/.test(B))continue;
+    var o={cep:cep,score:0};
+    if(nomeIdx>-1&&m.index>nomeIdx&&m.index-nomeIdx<400)o.score+=4;
+    if(/(ENDERE[ÇC]O|LOCAL D[EO]|UNIDADE CONSUMIDORA|INSTALA[ÇC][ÃA]O|ENTREGA|CLIENTE|TITULAR|RESID)/.test(U.slice(Math.max(0,m.index-260),m.index)))o.score+=2;
+    // logradouro
+    var rua='';for(var k=bloco.length-1;k>=0;k--){if(new RegExp('^'+DL_LOGR+'\\b','i').test(bloco[k])||new RegExp('\\b'+DL_LOGR+'\\s+[A-ZÀ-Ú0-9]','i').test(bloco[k])){rua=bloco[k];break}}
+    if(!rua){var lr=L[li]||'';if(new RegExp(DL_LOGR,'i').test(lr))rua=lr}
+    rua=rua.replace(/^(ENDERE[ÇC]O|LOCAL D[EO] CONSUMO|END\.?)[\s:]*/i,'').replace(/\b(CEP|C\.E\.P\.?)[\s:]*[\d.\-\s]{8,10}/i,'').trim();
+    var x=rua;
+    var qd=x.match(/\b(Q(?:UADRA|D)?\.?\s*\d+[A-Z]?)\s*[,\s]\s*(L(?:OTE|T)?\.?\s*\d+[A-Z]?)/i);if(qd){o.compl=qd[1].replace(/^Q(UADRA|D)?\.?\s*/i,'Qd. ')+', '+qd[2].replace(/^L(OTE|T)?\.?\s*/i,'Lt. ');x=x.replace(qd[0],' ')}
+    var ap=x.match(/\b(AP(?:TO|ARTAMENTO)?\.?\s*\d+[A-Z]?|BL(?:OCO)?\.?\s*[A-Z0-9]+|CASA\s*\d+[A-Z]?|SALA\s*\d+)/ig);if(ap){o.compl=[o.compl].concat(ap.map(function(a){return a.replace(/^AP(TO|ARTAMENTO)?\.?\s*/i,'Apto ').replace(/^BL(OCO)?\.?\s*/i,'Bloco ').replace(/^CASA\s*/i,'Casa ').replace(/^SALA\s*/i,'Sala ')})).filter(Boolean).join(', ');ap.forEach(function(a){x=x.replace(a,' ')})}
+    var nm=x.match(/,?\s*\b(?:N[º°O.]?\s*)?(\d{1,5}[A-Z]?|S\/?N)\b(?=\s*(,|-|$|\s[A-ZÀ-Ú]))/i);
+    var num=nm?nm[1].toUpperCase().replace('SN','S/N'):'';if(nm)x=x.replace(nm[0],' ');
+    // bairro
+    var bai='';var bm=T.slice(Math.max(0,m.index-260),m.index+40).match(/BAIRRO[\s:]*([A-ZÀ-Ú0-9][A-ZÀ-Ú0-9\s.]{2,40})/i);
+    if(bm)bai=bm[1];else{var parts=x.split(/\s*[,\-–]\s*/).map(function(s){return s.trim()}).filter(Boolean);if(parts.length>1){bai=parts.pop();x=parts.join(', ')}
+      else{var ss=(bloco.join(' ')).match(/\b(SETOR|ST\.|JARDIM|JD\.?|VILA|VL\.?|PARQUE|PQ\.?|CONJUNTO|CJ\.?|RESIDENCIAL|RES\.?|BAIRRO|CENTRO|N[ÚU]CLEO)\s*[A-ZÀ-Ú0-9][A-ZÀ-Ú0-9\s]{1,30}/i);if(ss)bai=ss[0]}}
+    bai=String(bai).replace(/\b(CEP|\d{5}-?\d{3}).*$/i,'').replace(new RegExp('\\b[A-ZÀ-Ú\\s]+\\s*[-\\/]\\s*('+DL_UFS+')\\b.*$'),'').trim();
+    var rua2=x.replace(/\s{2,}/g,' ').replace(/[,\s]+$/,'').trim();
+    // cidade/UF perto do CEP
+    var cu=T.slice(Math.max(0,m.index-120),m.index+80).match(new RegExp('([A-ZÀ-Úa-zà-ú][A-ZÀ-Úa-zà-ú ]{2,35}?)[ \\t]*[-\\/][ \\t]*('+DL_UFS+')\\b'));
+    if(cu&&!/(RUA|AVENIDA|SETOR|BAIRRO|QUADRA)/i.test(cu[1])){o.cidade=dlTituloNome(cu[1]);o.uf=cu[2]}
+    if(rua2){o.rua=dlTituloNome(rua2).replace(/^R\.?\s/,'Rua ').replace(/^Av\.?\s/i,'Avenida ').replace(/\bAv\b\.?/,'Avenida')}
+    o.num=num;o.bairro=bai?dlTituloNome(bai):'';
+    o.end=[o.rua,o.num?'nº '+o.num:(o.rua?'s/nº':''),o.bairro].filter(Boolean).join(', ');
+    if(o.rua)o.score+=2;if(o.num)o.score+=1;
+    cands.push(o);
+  }
+  return cands.sort(function(a,b){return b.score-a.score});
+}
+function dlInterpretar(textos,nomeAtual){
+  var id={},ends=[],tipos=[];
+  textos.forEach(function(x){var tp=x.tipo||dlTipoTexto(x.texto);tipos.push(tp);if(tp==='id'){var o=dlIdentidade(x.texto);Object.keys(o).forEach(function(k){if(o[k]&&!id[k])id[k]=o[k]})}});
+  // texto misto (identidade e comprovante colados juntos): completa o que faltou
+  textos.forEach(function(x,i){if(tipos[i]!=='id'){var o=dlIdentidade(x.texto);Object.keys(o).forEach(function(k){if(o[k]&&!id[k])id[k]=o[k]})}});
+  var nome=id.nome||nomeAtual||'';
+  textos.forEach(function(x,i){if(tipos[i]==='end')ends=ends.concat(dlEnderecos(x.texto,nome))});
+  if(!ends.length)textos.forEach(function(x,i){if(tipos[i]==='id')ends=ends.concat(dlEnderecos(x.texto,nome))});
+  // CPF também pode estar no comprovante (titular)
+  if(!id.cpf)textos.forEach(function(x){var c=dlCpf(dlLimpar(x.texto));if(c&&!id.cpf)id.cpf=c});
+  ends.sort(function(a,b){return b.score-a.score});
+  return{id:id,ends:ends,tipos:tipos};
+}
+// ---------- tela ----------
+function openDocLer(){
+  DL.docs=[];DL.campos=null;document.getElementById('dl-arqs').innerHTML='';document.getElementById('dl-colar').value='';document.getElementById('dl-res').innerHTML='';dlStatus('');
+  document.getElementById('dl-aplicar').style.display='none';openModal('mDocLer');
+}
+function dlSoltar(ev){ev.preventDefault();ev.currentTarget.classList.remove('sobre');dlAdd(ev.dataTransfer.files)}
+function dlAdd(files){
+  [].forEach.call(files||[],function(f){if(!/^image\//.test(f.type)&&!/pdf/i.test(f.type)&&!/\.(pdf|jpe?g|png|webp|bmp)$/i.test(f.name)){toast(f.name+': use foto (JPG, PNG) ou PDF.','warn');return}DL.docs.push({f:f,nome:f.name,tipo:'',texto:null})});
+  dlArqsDesenhar();
+}
+function dlArqsDesenhar(){
+  document.getElementById('dl-arqs').innerHTML=DL.docs.map(function(d,i){return'<div class="dl-arq"><i class="ti '+(/pdf/i.test(d.nome)?'ti-file-type-pdf':'ti-photo')+'"></i><span>'+esc(d.nome)+'</span><select onchange="DL.docs['+i+'].tipo=this.value"><option value=""'+(!d.tipo?' selected':'')+'>Detectar</option><option value="id"'+(d.tipo==='id'?' selected':'')+'>Identidade (RG/CNH)</option><option value="end"'+(d.tipo==='end'?' selected':'')+'>Comprovante de endereço</option></select>'+(d.texto!=null?'<span class="dl-ok"><i class="ti ti-check"></i> lido</span>':'')+'<i class="ti ti-x" style="cursor:pointer" onclick="DL.docs.splice('+i+',1);dlArqsDesenhar()"></i></div>'}).join('');
+}
+function dlLer(){
+  if(DL.lendo)return;var colado=document.getElementById('dl-colar').value.trim();
+  if(!DL.docs.length&&!colado){toast('Arraste os documentos ou cole o texto.','warn');return}
+  DL.lendo=true;var fila=DL.docs.filter(function(d){return d.texto==null}),i=0;
+  function prox(){if(i>=fila.length)return Promise.resolve();var d=fila[i++];dlStatus('Lendo '+d.nome+'…');return dlLerArquivo(d.f).then(function(r){d.texto=r.texto;d.via=r.via;dlArqsDesenhar()}).then(prox)}
+  prox().then(function(){
+    DL.lendo=false;dlStatus('');
+    var textos=DL.docs.filter(function(d){return d.texto}).map(function(d){return{texto:d.texto,tipo:d.tipo}});
+    if(colado)textos.push({texto:colado,tipo:''});
+    DL.res=dlInterpretar(textos,document.getElementById('fc-nome').value);DL.textos=textos;dlResultado();
+  }).catch(function(e){DL.lendo=false;dlStatus('');toast((e&&e.message)||'Não consegui ler o documento.','danger')});
+}
+function dlResultado(){
+  var r=DL.res,id=r.id,e=r.ends[0]||{},cur=function(i){var el=document.getElementById(i);return el?el.value.trim():''};
+  var linhas=[
+    ['nome','Nome',id.nome||'','fc-nome'],['cpf','CPF',id.cpf?fmtDoc(id.cpf):'','fc-doc'],['rg','RG e órgão',id.rg||'','fc-rg'],['nasc','Nascimento',id.nasc||'','fc-aniv'],['nac','Nacionalidade',id.nac||'','fc-nac'],
+    ['cep','CEP',e.cep||'','fc-cep'],['end','Endereço (rua, nº e bairro)',e.end||'','fc-end'],['compl','Complemento',e.compl||'','fc-compl'],['cid','Cidade',e.cidade||'','fc-cid'],['uf','UF',e.uf||'','fc-uf'],
+    ['fil','Filiação (vai para Observações)',id.filiacao||'',''],['nat','Naturalidade (vai para Observações)',id.natural||'','']
+  ];
+  DL.linhas=linhas;
+  var achou=linhas.filter(function(l){return l[2]}).length;
+  var h='<div class="dl-res-h"><b>'+achou+'</b> campo(s) encontrado(s)'+(id.tipoDoc?' · documento: '+id.tipoDoc:'')+'. Confira cada um com o documento; desmarque o que não quiser usar.</div>'+
+    '<table class="dl-tab"><tbody>'+linhas.map(function(l,i){var atual=l[3]?cur(l[3]):'';var dif=atual&&l[2]&&normTxt(atual)!==normTxt(l[3]==='fc-aniv'?l[2]:l[2]);
+      return'<tr class="'+(l[2]?'':'vazio')+'"><td><input type="checkbox" id="dl-ck-'+i+'"'+(l[2]&&(!atual||!dif)?' checked':'')+(l[2]?'':' disabled')+'></td><td>'+esc(l[1])+'</td><td><input id="dl-v-'+i+'" type="'+(l[0]==='nasc'?'date':'text')+'" value="'+esc(l[2])+'" placeholder="não encontrado" oninput="document.getElementById(\'dl-ck-'+i+'\').disabled=!this.value;document.getElementById(\'dl-ck-'+i+'\').checked=!!this.value">'+(dif?'<div class="dl-atual">no cadastro: '+esc(atual)+'</div>':'')+(l[0]==='cpf'&&l[2]?'<div class="dl-atual" style="color:#15803d"><i class="ti ti-check"></i> dígito verificador confere</div>':'')+'</td></tr>'}).join('')+'</tbody></table>';
+  if(r.ends.length>1)h+='<div class="dl-outros"><b>Outros endereços encontrados no comprovante</b> (ex.: o da empresa da conta). Se o escolhido estiver errado, troque:'+r.ends.slice(0,4).map(function(x,i){return'<button class="btn bo bs'+(i===0?' bg':'')+'" onclick="dlTrocarEnd('+i+')">'+esc([x.end,x.cidade&&x.uf?x.cidade+'/'+x.uf:'',x.cep].filter(Boolean).join(' · '))+'</button>'}).join('')+'</div>';
+  h+='<details class="dl-texto"><summary>Ver o texto lido</summary><pre>'+esc(DL.textos.map(function(t){return t.texto}).join('\n\n———\n\n').slice(0,6000))+'</pre></details>';
+  document.getElementById('dl-res').innerHTML=h;document.getElementById('dl-aplicar').style.display='inline-flex';
+  // cidade/UF pelo CEP quando não vieram
+  if(e.cep&&(!e.cidade||!e.uf)&&typeof cepConsultar==='function')cepConsultar(soDigitos(e.cep)).then(function(a){if(!a)return;var ci=DL.linhas.findIndex(function(l){return l[0]==='cid'}),ui=DL.linhas.findIndex(function(l){return l[0]==='uf'});
+    var vc=document.getElementById('dl-v-'+ci),vu=document.getElementById('dl-v-'+ui);if(vc&&!vc.value){vc.value=a.cidade;vc.oninput()}if(vu&&!vu.value){vu.value=a.uf;vu.oninput()}
+    var bi=DL.linhas.findIndex(function(l){return l[0]==='end'}),vb=document.getElementById('dl-v-'+bi);if(vb&&a.bairro&&vb.value&&normTxt(vb.value).indexOf(normTxt(a.bairro))<0&&!/,.*,/.test(vb.value)){vb.value=vb.value+', '+a.bairro}}).catch(function(){});
+}
+function dlTrocarEnd(i){var x=DL.res.ends.splice(i,1)[0];DL.res.ends.unshift(x);dlResultado()}
+function dlAplicar(){
+  var n=0,obs=[];
+  DL.linhas.forEach(function(l,i){var ck=document.getElementById('dl-ck-'+i),v=document.getElementById('dl-v-'+i).value.trim();if(!ck||!ck.checked||!v)return;
+    if(!l[3]){obs.push(l[1].replace(/ \(.*\)/,'')+': '+v);return}
+    var el=document.getElementById(l[3]);if(!el)return;
+    if(l[3]==='fc-doc'){if(soDigitos(v).length===14)cliTipoMudou('Pessoa Jurídica',true);el.value=fmtDoc(v)}
+    else if(l[3]==='fc-uf'){el.value=v.toUpperCase()}else el.value=v;
+    if(l[3]==='fc-cep'){_cepUlt=soDigitos(v)}
+    el.classList.add('doc-lido');el.addEventListener('input',function x(){el.classList.remove('doc-lido');el.removeEventListener('input',x)});n++;
+  });
+  if(obs.length){var o=document.getElementById('fc-obs');o.value=(o.value?o.value+'\n':'')+obs.join('\n');o.classList.add('doc-lido');n+=obs.length}
+  var fe=document.getElementById('fc-end');if(fe)fe.dataset.auto=fe.value;
+  if(document.getElementById('fc-doc').value)cliChecaDuplicado();
+  closeModal('mDocLer');toast(n+' campo(s) preenchido(s) pelos documentos. Estão em amarelo: confira antes de salvar.','ok');
 }
 
 var tabRender={escritorio2d:renderEscritorio2D,kanban:renderKanban,dashboard:renderDashboard,processos:renderProcessos,clientes:renderClientes,tarefas:renderTarefas,prazos:renderPrazos,intimacoes:renderIntimacoes,atendimentos:renderAtendimentos,horas:renderHoras,minutas:renderMinutas,jurisprudencia:function(){minutaSub='jp';switchTabById('minutas')},agenda:renderAgenda,financeiro:renderFinanceiro,produtividade:renderProdutividade,relatorios:renderRelatorios,assinaturas:renderAssinaturas,calculos:renderCalculos,portais:renderPortais,historico:renderHistorico,config:renderConfig};
