@@ -718,6 +718,11 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 <div class="mf"><button class="btn bo" onclick="closeModal('mFin')">Cancelar</button><button class="btn bp" id="ff-salvar" onclick="saveFin()"><i class="ti ti-check"></i> Salvar</button></div>
 </div></div>
 
+<div id="mE2Nomes" class="overlay hidden" onclick="if(event.target.id==='mE2Nomes')closeModal('mE2Nomes')">
+<div class="modal" style="max-width:520px"><div class="mh"><h2><i class="ti ti-users"></i> Renomear a equipe</h2><button class="btn bo bs" onclick="closeModal('mE2Nomes')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div style="font-size:12px;color:var(--text3);margin-bottom:10px">Os nomes valem para todo o escritório e aparecem no mapa, nos cartões e nas entregas.</div><div class="fg" id="e2n-lista"></div></div>
+<div class="mf"><button class="btn bo" onclick="e2RenomearSalvar(true)" style="margin-right:auto"><i class="ti ti-restore"></i> Nomes originais</button><button class="btn bo" onclick="closeModal('mE2Nomes')">Cancelar</button><button class="btn bp" onclick="e2RenomearSalvar()"><i class="ti ti-check"></i> Salvar</button></div>
+</div></div>
 <div id="mHonAv" class="overlay hidden" onclick="if(event.target.id==='mHonAv')closeModal('mHonAv')">
 <div class="modal" style="max-width:560px"><div class="mh"><h2 id="mHonAvT">Honorários sem processo</h2><button class="btn bo bs" onclick="closeModal('mHonAv')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
 <div class="mb"><div style="font-size:12px;color:var(--text2);background:var(--cream);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;line-height:1.6">Para serviços que não viraram processo: consulta, contrato, requerimento ao INSS, acordo extrajudicial, assessoria. A conta funciona igual à de um processo: parcelas, pagamentos parciais, descontos e recibo.</div>
@@ -6297,10 +6302,22 @@ var E2_EQUIPE=[
   {id:'clara',nome:'Clara',cargo:'Biblioteca',sala:'biblio',camisa:'#0f766e',cabelo:'#eab308',pele:'#ffdbac',longo:true},
   {id:'sonia',nome:'Sônia',cargo:'Relatórios e rotina',sala:'dir',camisa:'#9b2235',cabelo:'#111827',pele:'#c68642',longo:true}
 ];
+
+// nomes da equipe: editáveis em "Renomear equipe" (ficam salvos para todo o escritório)
+function e2NomeDe(d){var n=(cfg.e2Nomes||{})[d.id];return(n&&String(n).trim())||d.nome}
+function e2AplicarNomes(){if(!E2.func)return;E2.func.forEach(function(f){var d=E2_EQUIPE.filter(function(x){return x.id===f.id})[0];if(d)f.nome=e2NomeDe(d)})}
+function e2RenomearAbrir(){
+  e2Init();document.getElementById('e2n-lista').innerHTML=E2_EQUIPE.map(function(d){return'<div class="fgr"><label><span class="e2-av" style="background:'+d.camisa+';width:16px;height:16px;font-size:9px;vertical-align:middle">'+esc(e2NomeDe(d)[0])+'</span> '+esc(d.cargo)+'</label><input id="e2n-'+d.id+'" maxlength="18" value="'+esc(e2NomeDe(d))+'" placeholder="'+esc(d.nome)+'"></div>'}).join('');
+  openModal('mE2Nomes');
+}
+function e2RenomearSalvar(padrao){
+  var n={};if(!padrao)E2_EQUIPE.forEach(function(d){var v=document.getElementById('e2n-'+d.id).value.trim().replace(/\s+/g,' ');if(v&&v!==d.nome)n[d.id]=v});
+  cfg.e2Nomes=n;saveAll();e2AplicarNomes();closeModal('mE2Nomes');if(currentTab==='escritorio2d')renderEscritorio2D();toast(padrao?'Nomes originais de volta.':'Nomes da equipe atualizados.','ok');
+}
 function e2Func(id){return E2.func.filter(function(f){return f.id===id})[0]}
 function e2Init(){
   if(E2.func)return;
-  E2.func=E2_EQUIPE.map(function(d){var m=E2_PONTOS[d.sala].mesa;return Object.assign({},d,{x:m.x,y:m.y,dir:1,frame:0,ft:0,caminho:[],estado:'parado',fila:[],tarefa:null,balao:null,ini:0,res:null,sentado:true})});
+  E2.func=E2_EQUIPE.map(function(d){var m=E2_PONTOS[d.sala].mesa;return Object.assign({},d,{nome:e2NomeDe(d),x:m.x,y:m.y,dir:1,frame:0,ft:0,caminho:[],estado:'parado',fila:[],tarefa:null,balao:null,ini:0,res:null,sentado:true})});
 }
 // ---------- tarefas ----------
 function e2R(titulo,txt,html,acoes){return{titulo:titulo,txt:txt,html:html||'',acoes:acoes||[]}}
@@ -6635,10 +6652,10 @@ function e2Comando(txt){
 function e2Enviar(){var i=document.getElementById('e2-cmd');if(!i)return;var r=e2Comando(i.value);if(r.length)i.value='';else toast('Não entendi o pedido. Veja as sugestões abaixo do campo.','warn')}
 // ---------- tela ----------
 function renderEscritorio2D(){
-  e2Init();
+  e2Init();e2AplicarNomes();
   if(!document.getElementById('e2-fonte')){var l=document.createElement('link');l.id='e2-fonte';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';document.head.appendChild(l)}
   var sug=[['Rotina do dia','rotina'],['O que vai entrar em 15 dias','o que vai entrar nos próximos 15 dias'],['O que entrou no mês','o que entrou este mês'],['Checar intimações','checar intimações'],['Prazos da semana','prazos da semana'],['Audiências','audiências'],['Cobrar vencidos','cobrar vencidos'],['Aniversariantes','aniversariantes'],['Atualizar andamentos','atualizar andamentos'],['Relatório do mês','relatório do mês'],['O que vocês sabem fazer?','ajuda']];
-  document.getElementById('tab-content').innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-device-gamepad-2"></i></div><h2>Escritório 2D</h2></div><div style="font-size:12px;color:var(--text3)">Clique num funcionário ou escreva o pedido. Ele vai ao setor, faz e traz o resultado.</div></div>'+
+  document.getElementById('tab-content').innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-device-gamepad-2"></i></div><h2>Escritório 2D</h2></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:12px;color:var(--text3)">Clique num funcionário ou escreva o pedido. Ele vai ao setor, faz e traz o resultado.</span><button class="btn bo bs" onclick="e2RenomearAbrir()"><i class="ti ti-pencil"></i> Renomear equipe</button></div></div>'+
     '<div class="e2-cmd"><i class="ti ti-message-chatbot"></i><input id="e2-cmd" placeholder="Pergunte à equipe: o que vai entrar nos próximos 15 dias? · o que entrou em outubro? · tarefa: ligar para Maria amanhã" onkeydown="if(event.key===\'Enter\')e2Enviar()" autocomplete="off"><button class="btn bp" onclick="e2Enviar()"><i class="ti ti-send"></i> Pedir</button></div>'+
     '<div class="e2-sug">'+sug.map(function(x){return'<button onclick="e2Comando(\''+x[1]+'\')">'+esc(x[0])+'</button>'}).join('')+'</div>'+
     '<div class="e2-grid"><div class="e2-mapa-w"><div class="e2-mapa" id="e2-mapa"><canvas id="e2-cv" width="'+(E2_W*E2_ESC)+'" height="'+(E2_H*E2_ESC)+'" onclick="e2Clique(event)" onmousemove="e2Hover(event)"></canvas><div id="e2-ov"></div><div id="e2-menu" class="e2-menu hidden"></div></div><div class="e2-equipe" id="e2-equipe"></div></div>'+
