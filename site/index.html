@@ -6522,7 +6522,7 @@ function e2SalaAdvNome(){var a=e2Advogados();return a.length?a.map(function(x){r
 var E2_EQUIPE=[
   {id:'rita',nome:'Antônio',cargo:'Recepção',sala:'recep',camisa:'#db2777',cabelo:'#3b2314',pele:'#f1c27d'},
   {id:'davi',nome:'Ana Amaral',cargo:'Intimações',sala:'intim',camisa:'#2563eb',cabelo:'#111827',pele:'#ffdbac',longo:true},
-  {id:'lucia',nome:'Amanda',cargo:'Prazos e Agenda',sala:'agenda',camisa:'#7c3aed',cabelo:'#7c2d12',pele:'#c68642',longo:true},
+  {id:'lucia',nome:'Denerci',cargo:'Prazos e Agenda',sala:'agenda',camisa:'#7c3aed',cabelo:'#7c2d12',pele:'#ffdbac',longo:false},
   {id:'marcos',nome:'Nauan',cargo:'Financeiro',sala:'fin',camisa:'#15803d',cabelo:'#1f2937',pele:'#f1c27d'},
   {id:'beto',nome:'Natan',cargo:'Arquivo e Processos',sala:'arq',camisa:'#b45309',cabelo:'#6b7280',pele:'#c68642'},
   {id:'clara',nome:'Pedro',cargo:'Biblioteca',sala:'biblio',camisa:'#0f766e',cabelo:'#a16207',pele:'#ffdbac'},
@@ -6530,7 +6530,7 @@ var E2_EQUIPE=[
 ];
 
 // nomes da equipe: editáveis em "Renomear equipe" (ficam salvos para todo o escritório)
-function e2NomeDe(d){var n=(cfg.e2Nomes||{})[d.id];return(n&&String(n).trim())||d.nome}
+function e2NomeDe(d){var n=(cfg.e2Nomes||{})[d.id];if(d.id==='lucia'&&n==='Amanda')n='';return(n&&String(n).trim())||d.nome}
 function e2AplicarNomes(){if(!E2.func)return;E2.func.forEach(function(f){var d=E2_EQUIPE.filter(function(x){return x.id===f.id})[0];if(d)f.nome=e2NomeDe(d)})}
 function e2RenomearAbrir(){
   e2Init();document.getElementById('e2n-lista').innerHTML=E2_EQUIPE.map(function(d){return'<div class="fgr"><label><span class="e2-av" style="background:'+d.camisa+';width:16px;height:16px;font-size:9px;vertical-align:middle">'+esc(e2NomeDe(d)[0])+'</span> '+esc(d.cargo)+'</label><input id="e2n-'+d.id+'" maxlength="18" value="'+esc(e2NomeDe(d))+'" placeholder="'+esc(d.nome)+'"></div>'}).join('');
