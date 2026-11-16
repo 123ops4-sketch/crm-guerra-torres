@@ -719,6 +719,20 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 <div class="mf"><button class="btn bo" onclick="closeModal('mFin')">Cancelar</button><button class="btn bp" id="ff-salvar" onclick="saveFin()"><i class="ti ti-check"></i> Salvar</button></div>
 </div></div>
 
+<div id="mGmLer" class="overlay hidden" onclick="if(event.target.id==='mGmLer')closeModal('mGmLer')">
+<div class="modal" style="max-width:720px"><div class="mh"><h2 style="font-size:16px"><i class="ti ti-mail"></i> <span id="gml-t"></span></h2><button class="btn bo bs" onclick="closeModal('mGmLer')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div id="gml-cab" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
+<div id="gml-corpo" style="white-space:pre-wrap;font-size:13px;line-height:1.5;background:var(--cream);border:1px solid var(--border2);border-radius:var(--r);padding:12px;max-height:46vh;overflow:auto"></div>
+<div id="gml-anx" style="font-size:12px;color:var(--text3);margin-top:6px"></div>
+<div class="fg" style="margin-top:12px"><div class="fgr full"><label>Cliente</label><input id="gml-cli" placeholder="Digite para buscar o cliente"><div id="gml-vinc" style="font-size:11px;color:var(--text3);margin-top:4px"></div></div></div></div>
+<div class="mf" style="flex-wrap:wrap"><a id="gml-link" class="btn bo" target="_blank" style="margin-right:auto"><i class="ti ti-brand-gmail"></i> Abrir no Gmail</a><button class="btn bo" onclick="gmVincular()"><i class="ti ti-link"></i> Vincular ao cliente</button><button class="btn bo" onclick="gmCriar('tarefa')"><i class="ti ti-checkbox"></i> Criar tarefa</button><button class="btn bp" onclick="gmCriar('prazo')"><i class="ti ti-alarm"></i> Criar prazo</button></div>
+</div></div>
+<div id="mGmFiltros" class="overlay hidden" onclick="if(event.target.id==='mGmFiltros')closeModal('mGmFiltros')">
+<div class="modal" style="max-width:620px"><div class="mh"><h2><i class="ti ti-adjustments"></i> Filtros de e-mail</h2><button class="btn bo bs" onclick="closeModal('mGmFiltros')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div style="font-size:12px;color:var(--text3);margin-bottom:8px">Um filtro por linha: <b>Nome | consulta</b>. A consulta usa a mesma busca do Gmail — ex.: <code>from:inss.gov.br newer_than:60d</code>, <code>subject:exigência</code>, <code>"Meu INSS"</code>, <code>has:attachment</code>.</div>
+<textarea id="gmf-txt" style="width:100%;min-height:150px;font-family:monospace;font-size:12px"></textarea></div>
+<div class="mf"><button class="btn bo" onclick="gmFiltrosSalvar(true)" style="margin-right:auto"><i class="ti ti-restore"></i> Filtros originais</button><button class="btn bo" onclick="closeModal('mGmFiltros')">Cancelar</button><button class="btn bp" onclick="gmFiltrosSalvar()"><i class="ti ti-check"></i> Salvar</button></div>
+</div></div>
 <div id="mE2Nomes" class="overlay hidden" onclick="if(event.target.id==='mE2Nomes')closeModal('mE2Nomes')">
 <div class="modal" style="max-width:520px"><div class="mh"><h2><i class="ti ti-users"></i> Renomear a equipe</h2><button class="btn bo bs" onclick="closeModal('mE2Nomes')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
 <div class="mb"><div style="font-size:12px;color:var(--text3);margin-bottom:10px">Os nomes valem para todo o escritório e aparecem no mapa, nos cartões e nas entregas.</div><div class="fg" id="e2n-lista"></div></div>
@@ -2447,8 +2461,8 @@ function renderAgenda(){
   tc.innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-calendar"></i></div><h2>Agenda</h2></div></div>'+
     '<div class="card" style="margin-bottom:16px"><div class="card-header"><div style="display:flex;align-items:center;gap:10px"><button class="btn bo bs" onclick="calNav(-1)" aria-label="Mês anterior"><i class="ti ti-chevron-left"></i></button><h3 id="cal-m" style="font-size:18px">'+mNames[calMonth]+' '+calYear+'</h3><button class="btn bo bs" onclick="calNav(1)"><i class="ti ti-chevron-right"></i></button></div></div>'+
     '<div style="padding:16px"><div class="cal-g" id="cal-names"></div><div class="cal-g" style="margin-top:4px" id="cal-days"></div><div class="cal-leg"><span class="ce-l">Compromisso</span><span class="ce-a">Audiência</span><span class="ce-p">Prazo</span><span class="ce-i">Intimação</span><span class="ce-t">Tarefa</span><span class="ce-g">Google</span><span style="background:none;color:var(--text3)">Clique num dia para marcar</span></div></div></div>'+
-    '<div class="card"><div class="card-header" style="flex-wrap:wrap;gap:8px"><h3><i class="ti ti-list"></i> Próximos 60 dias</h3><div style="display:flex;gap:6px;flex-wrap:wrap">'+gcalBotaoHtml()+'<button class="btn bp bs" onclick="openLembreteModal(todayStr)"><i class="ti ti-plus"></i> Compromisso</button></div></div><div id="ag-list" style="padding:4px 0"></div></div>';
-  renderCalendar();
+    '<div class="card"><div class="card-header" style="flex-wrap:wrap;gap:8px"><h3><i class="ti ti-list"></i> Próximos 60 dias</h3><div style="display:flex;gap:6px;flex-wrap:wrap">'+gcalBotaoHtml()+'<button class="btn bp bs" onclick="openLembreteModal(todayStr)"><i class="ti ti-plus"></i> Compromisso</button></div></div><div id="ag-list" style="padding:4px 0"></div></div>'+gmCardHtml();
+  renderCalendar();gmRenderLista();if(gmConectado()&&!gml.res&&!gml.carregando)gmBuscar();
 }
 function renderCalendar(){
   var mNames=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -4702,7 +4716,8 @@ function gcalCfgHtml(){
     (g.ultimaSinc?'<p class="cfg-nota" style="margin-top:8px">Última sincronização: '+new Date(g.ultimaSinc).toLocaleString('pt-BR')+'</p>':'')+
     '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">Como obter o ID do cliente (uma vez só, cerca de 10 minutos)</summary><ol style="margin:8px 0 0 18px;padding:0">'+
       '<li>Entre em <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> com a conta Google do escritório (<b>'+esc(gcalConta()||'a conta acima')+'</b>) e crie um projeto (ex.: "Agenda Guerra Torres").</li>'+
-      '<li>Em <b>APIs e serviços › Biblioteca</b>, procure <b>Google Calendar API</b> e clique em <b>Ativar</b>. Faça o mesmo com a <b>Google Drive API</b> (para a pasta dos clientes).</li>'+
+      '<li>Em <b>APIs e serviços › Biblioteca</b>, procure <b>Google Calendar API</b> e clique em <b>Ativar</b>. Faça o mesmo com a <b>Google Drive API</b> (para a pasta dos clientes) e a <b>Gmail API</b> (para ler os e-mails na Agenda).</li>'+
+      '<li>Em <b>Tela de consentimento OAuth › Acesso a dados</b> (escopos), adicione <code>.../auth/gmail.readonly</code> — o Google o trata como escopo restrito; com o app em modo <b>Teste</b> e a conta do escritório como usuária de teste, funciona normalmente.</li>'+
       '<li>Em <b>Tela de consentimento OAuth</b>: tipo <b>Externo</b>, nome do app, seu e-mail. Em <b>Usuários de teste</b>, adicione <b>'+esc(gcalConta()||'a conta do escritório')+'</b>.</li>'+
       '<li>Em <b>Credenciais › Criar credenciais › ID do cliente OAuth</b>: tipo <b>Aplicativo da Web</b>. Em <b>Origens JavaScript autorizadas</b>, coloque o endereço do sistema'+(origem?': <code>'+esc(origem)+'</code>':' publicado (ex.: https://crm-guerra-torres.vercel.app)')+'.</li>'+
       '<li>Copie o <b>ID do cliente</b>, cole acima e clique em <b>Salvar</b>. Depois, em cada computador, clique em <b>Conectar</b> e entre com <b>'+esc(gcalConta()||'a conta do escritório')+'</b> — o sistema já sugere essa conta e avisa se outra for usada.</li>'+
@@ -5704,10 +5719,167 @@ function abrirFichaCliente(cliId){
     '<div class="dps"><h4>Quadro — cartões em aberto ('+abertas.length+')</h4>'+(abertas.length?abertas.map(function(t){return kbTarefaLinha(t,true)}).join(''):'<div style="font-size:12px;color:var(--text3)">Nenhum cartão em aberto.</div>')+
       (feitas.length?'<details style="margin-top:6px"><summary style="font-size:12px;cursor:pointer;color:var(--text3)">Concluídos ('+feitas.length+')</summary>'+feitas.slice(0,15).map(function(t){return kbTarefaLinha(t,true)}).join('')+'</details>':'')+
       '<div style="font-size:11px;color:var(--text3);margin-top:8px">Colocar no quadro:</div>'+kbEscolherQuadroHtml('',c.id)+'</div>'+
+    gmFichaHtml(c)+
     '<div class="dps"><h4>Próximos compromissos</h4>'+(ag.length?ag.map(function(e){return agLinhaHtml(e,true)}).join(''):'<div style="font-size:12px;color:var(--text3)">Nada marcado.</div>')+'<button class="btn bo bs" style="width:100%;justify-content:center;margin-top:7px" onclick="openLembreteModal(todayStr);setTimeout(function(){var i=document.getElementById(\'fl-cli\');if(i){i.value=\''+esc(c.nome).replace(/'/g,'')+'\';i.dataset.cliId=\''+c.id+'\'}},60)"><i class="ti ti-calendar-plus"></i> Marcar compromisso</button></div>'+
     (hon.comb||hon.rec?'<div class="dps"><h4>Honorários</h4><div class="hon-mini"><div><span>Combinado</span><b>'+fmtM(hon.comb)+'</b></div><div><span>Recebido</span><b style="color:#15803d">'+fmtM(hon.rec)+'</b></div><div><span>Saldo</span><b style="color:#b45309">'+fmtM(hon.saldo)+'</b></div></div>'+(hon.venc?'<div style="font-size:12px;color:#b91c1c;margin-top:6px"><i class="ti ti-alert-triangle"></i> '+fmtM(hon.venc)+' vencido</div>':'')+'</div>':'')+
     '<div class="dps"><h4>Resumo</h4><div class="fc-res"><span><b>'+docs.length+'</b> documento(s) faltando</span><span><b>'+anx+'</b> anexo(s)</span><span><b>'+atend+'</b> atendimento(s)</span><span><b>'+intims.filter(function(i){return i.st==='pendente'&&(i.cliId===c.id||pids.indexOf(i.procId)>-1)}).length+'</b> intimação(ões) pendente(s)</span></div></div>';
   panel.classList.add('open');
+}
+
+// ===================== GMAIL — e-mails do escritório na Agenda (somente leitura; nada é gravado além do que você vincular) =====================
+var GML_ESCOPO='https://www.googleapis.com/auth/gmail.readonly',GML_API='https://gmail.googleapis.com/gmail/v1/users/me/';
+var gml={token:null,exp:0,cliente:null,email:'',filtro:0,busca:'',res:null,carregando:false,abertos:{},atual:null};
+var GML_FILTROS_PADRAO=[
+  {nome:'INSS / Meu INSS',q:'(from:inss.gov.br OR from:gov.br OR "Meu INSS" OR INSS OR requerimento) newer_than:90d'},
+  {nome:'Tribunais (jus.br)',q:'from:jus.br newer_than:30d'},
+  {nome:'Recebidos — 7 dias',q:'in:inbox newer_than:7d'}
+];
+function gmFiltros(){var f=cfg.gmFiltros;return Array.isArray(f)&&f.length?f:GML_FILTROS_PADRAO}
+function gmConectado(){return!!gml.token&&Date.now()<gml.exp-60000}
+function gmJaUsou(){try{return localStorage.getItem('gt_gml_on')==='1'}catch(e){return false}}
+function gmErro(e){var m=String(e&&e.message||e||'');gml.carregando=false;if(!m||/cancel|popup_closed|access_denied/i.test(m)){gmRenderLista();return}toast('Gmail: '+esc(m),'danger');gmRenderLista()}
+function gmConectar(trocar){
+  if(location.protocol==='file:')return Promise.reject(new Error('o Google só permite conectar com o sistema publicado (Vercel). Aberto como arquivo, o login é bloqueado.'));
+  if(!gcalConfigurado()){cfgAba='integracoes';switchTabById('config');return Promise.reject(new Error('informe primeiro o ID do cliente Google em Configurações › Integrações.'))}
+  return gcalCarregarLib().then(function(){return new Promise(function(res,rej){
+    gml._ok=res;gml._err=rej;
+    if(!gml.cliente)gml.cliente=google.accounts.oauth2.initTokenClient({client_id:cfg.google.clientId,scope:GML_ESCOPO,hint:gcalConta(),login_hint:gcalConta(),
+      callback:function(r){if(r&&r.error){gml._err(new Error(r.error_description||r.error));return}gml.token=r.access_token;gml.exp=Date.now()+((+r.expires_in)||3600)*1000;try{localStorage.setItem('gt_gml_on','1')}catch(e){}gmQuemSou();gml._ok(gml.token)},
+      error_callback:function(e){gml._err(new Error(e&&e.type||'login cancelado'))}});
+    gml.cliente.requestAccessToken({prompt:trocar?'select_account':''});
+  })});
+}
+function gmDesconectar(){try{if(gml.token&&window.google&&google.accounts)google.accounts.oauth2.revoke(gml.token,function(){})}catch(e){}gml.token=null;gml.exp=0;gml.email='';gml.res=null;gml.abertos={};try{localStorage.removeItem('gt_gml_on')}catch(e){}toast('Gmail desconectado neste navegador.','ok');if(currentTab==='agenda')gmRenderCard()}
+function gmFetch(caminho,tentou){
+  var go=gmConectado()?Promise.resolve():gmConectar();
+  return go.then(function(){return fetch(GML_API+caminho,{headers:{Authorization:'Bearer '+gml.token}}).then(function(r){
+    if(r.status===401&&!tentou){gml.token=null;return gmFetch(caminho,true)}
+    if(!r.ok)return r.text().then(function(t){throw new Error('o Gmail respondeu '+r.status+(r.status===403?' — confira se a API do Gmail está ativada e o escopo gmail.readonly está na tela de consentimento':'')+(t?': '+t.slice(0,140):''))});
+    return r.json();
+  })});
+}
+function gmQuemSou(){gmFetch('profile').then(function(j){gml.email=j.emailAddress||'';if(gcalContaErrada(gml.email))toast('Gmail conectado em <b>'+esc(gml.email)+'</b>, mas a conta do escritório é <b>'+esc(gcalConta())+'</b>. Use <b>Trocar conta</b> no quadro de e-mails.','danger');if(currentTab==='agenda')gmRenderCard()}).catch(function(){})}
+function gmCab(m,n){var h=((m.payload||{}).headers||[]).filter(function(x){return String(x.name).toLowerCase()===n.toLowerCase()})[0];return h?h.value:''}
+function gmRemetente(de){var m=/^\s*"?([^"<]*?)"?\s*<([^>]+)>/.exec(de||'');return m?(m[1]||m[2]):(de||'')}
+// etiquetas automáticas — leitura do assunto e do trecho; é só uma pista, confira sempre o e-mail
+function gmEtiquetas(txt){
+  var t=normTxt(txt),r=[];
+  if(/exigencia/.test(t))r.push({k:'exig',n:'Exigência',c:'#b91c1c'});
+  if(/indeferid|negad/.test(t))r.push({k:'indef',n:'Indeferido',c:'#b91c1c'});
+  if(/(?:^|[^a-z])(concedid|deferid)/.test(t))r.push({k:'conc',n:'Concedido',c:'#15803d'});
+  if(/pericia|avaliacao social|avaliacao biopsicossocial/.test(t))r.push({k:'per',n:'Perícia/avaliação',c:'#7c3aed'});
+  if(/agendad|agendamento|remarcad/.test(t))r.push({k:'ag',n:'Agendamento',c:'#2563eb'});
+  if(/recurso|crps|junta de recursos/.test(t))r.push({k:'rec',n:'Recurso',c:'#b45309'});
+  if(/intimac|citac|despacho|sentenca|audiencia/.test(t))r.push({k:'jud',n:'Judicial',c:'#0f766e'});
+  return r;
+}
+function gmProtocolo(txt){var m=/protocolo[^0-9]{0,40}(\d[\d.\-\/]{5,})/i.exec(txt||'');return m?m[1].replace(/[.\-\/]+$/,''):''}
+function gmAcharCliente(txt){
+  var dig=String(txt||'').replace(/(\d{3})\.(\d{3})\.(\d{3})-(\d{2})/g,'$1$2$3$4');
+  var cpfs=dig.match(/\b\d{11}\b|\b\d{14}\b/g)||[];
+  for(var i=0;i<cpfs.length;i++){var c=clientes.filter(function(x){return x.doc&&soDigitos(x.doc)===cpfs[i]})[0];if(c)return c}
+  var t=' '+normTxt(txt).replace(/[^a-z0-9]+/g,' ')+' ';
+  var achados=clientes.filter(function(c){var n=normTxt(c.nome).replace(/[^a-z0-9]+/g,' ').trim();return n.split(' ').length>=2&&n.length>=8&&t.indexOf(' '+n+' ')>-1});
+  return achados.length===1?achados[0]:null;
+}
+function gmVinculado(id){for(var i=0;i<clientes.length;i++){var e=(clientes[i].emails||[]).filter(function(x){return x.id===id})[0];if(e)return clientes[i]}return null}
+function gmLinkGmail(m){return'https://mail.google.com/mail/?authuser='+encodeURIComponent(gml.email||gcalConta())+'#all/'+(m.threadId||m.id)}
+function gmCardHtml(){
+  var fs=gmFiltros(),con=gmConectado();
+  var bt=!gcalConfigurado()?'<button class="btn bo bs" onclick="cfgAba=\'integracoes\';switchTabById(\'config\')"><i class="ti ti-brand-google"></i> Configurar Google</button>':
+    con?'<button class="btn bo bs" onclick="gmBuscar()" title="Buscar de novo"><i class="ti ti-refresh"></i> Atualizar</button><button class="btn bo bs" onclick="gmConectar(true).then(gmBuscar).catch(gmErro)" title="Entrar com outra conta">Trocar conta</button><button class="btn bo bs" onclick="gmDesconectar()" title="Desconectar o Gmail neste navegador"><i class="ti ti-plug-x"></i></button>':
+    '<button class="btn bp bs" onclick="gmConectar().then(gmBuscar).catch(gmErro)"><i class="ti ti-brand-gmail"></i> '+(gmJaUsou()?'Reconectar Gmail':'Conectar Gmail')+'</button>';
+  return'<div class="card" id="gm-card" style="margin-top:16px"><div class="card-header" style="flex-wrap:wrap;gap:8px"><h3><i class="ti ti-mail" style="color:#b91c1c"></i> E-mails do escritório'+(gml.email?' <span style="font-size:11px;font-weight:400;color:var(--text3)">· '+esc(gml.email)+'</span>':'')+'</h3><div style="display:flex;gap:6px;flex-wrap:wrap">'+bt+'</div></div>'+
+    '<div style="padding:10px 16px 0;display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+fs.map(function(f,i){return'<button class="btn bs '+(i===gml.filtro?'bp':'bo')+'" onclick="gmFiltro('+i+')">'+esc(f.nome)+'</button>'}).join('')+
+      '<button class="btn bo bs" onclick="gmFiltrosAbrir()" title="Editar os filtros"><i class="ti ti-adjustments"></i></button>'+
+      '<div class="gt-search" style="flex:1;min-width:200px"><i class="ti ti-search"></i><input id="gm-busca" placeholder="Buscar no Gmail (nome, CPF, protocolo…) e Enter" value="'+esc(gml.busca)+'" onkeydown="if(event.key===\'Enter\'){gml.busca=this.value.trim();gmBuscar()}"></div></div>'+
+    '<div id="gm-list" style="padding:8px 0 4px"></div>'+
+    '<div style="padding:0 16px 12px;font-size:11px;color:var(--text3)"><i class="ti ti-lock"></i> Somente leitura. Os e-mails são consultados na hora e não ficam gravados no sistema — só o que você vincular a um cliente (assunto, data e link). As etiquetas são automáticas: confira sempre o e-mail.</div></div>';
+}
+function gmRenderCard(){var c=document.getElementById('gm-card');if(!c)return;c.outerHTML=gmCardHtml();gmRenderLista()}
+function gmFiltro(i){gml.filtro=i;gml.res=null;gmRenderCard();if(gmConectado())gmBuscar()}
+function gmConsulta(){var f=gmFiltros()[gml.filtro]||gmFiltros()[0];return[(f&&f.q)||'',gml.busca].filter(Boolean).join(' ')}
+function gmBuscar(){
+  var b=document.getElementById('gm-busca');if(b)gml.busca=b.value.trim();
+  gml.carregando=true;gmRenderLista();
+  return gmFetch('messages?maxResults=25&q='+encodeURIComponent(gmConsulta())).then(function(j){
+    var ids=(j.messages||[]);
+    return Promise.all(ids.map(function(m){return gmFetch('messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date')}));
+  }).then(function(lista){
+    gml.res=lista.map(function(m){var assunto=gmCab(m,'Subject')||'(sem assunto)',txt=assunto+' '+(m.snippet||'');
+      return{id:m.id,threadId:m.threadId,de:gmCab(m,'From'),assunto:assunto,snippet:gmDecodificarEnt(m.snippet||''),data:m.internalDate?new Date(+m.internalDate).toISOString():'',naoLido:(m.labelIds||[]).indexOf('UNREAD')>-1,etq:gmEtiquetas(txt),prot:gmProtocolo(txt),cli:gmAcharCliente(txt)}});
+    gml.carregando=false;gmRenderLista();
+  }).catch(gmErro);
+}
+function gmDecodificarEnt(s){var d=document.createElement('textarea');d.innerHTML=s;return d.value}
+function gmEtqHtml(l){return(l||[]).map(function(e){return'<span style="font-size:10px;font-weight:700;color:#fff;background:'+e.c+';border-radius:9px;padding:1px 7px;margin-right:4px">'+e.n+'</span>'}).join('')}
+function gmRenderLista(){
+  var el=document.getElementById('gm-list');if(!el)return;
+  if(!gcalConfigurado()){el.innerHTML='<div class="empty" style="padding:22px"><i class="ti ti-brand-google"></i>Configure o ID do cliente Google em Configurações › Integrações (o mesmo da Agenda e do Drive).</div>';return}
+  if(!gmConectado()){el.innerHTML='<div class="empty" style="padding:22px"><i class="ti ti-mail-off"></i>Conecte o Gmail de '+esc(gcalConta()||'o escritório')+' para ver os e-mails aqui.</div>';return}
+  if(gml.carregando){el.innerHTML='<div class="empty" style="padding:22px"><i class="ti ti-loader"></i>Buscando e-mails…</div>';return}
+  if(!gml.res){el.innerHTML='<div class="empty" style="padding:22px"><i class="ti ti-search"></i>Clique em <b>Atualizar</b> ou escolha um filtro.</div>';return}
+  if(!gml.res.length){el.innerHTML='<div class="empty" style="padding:22px"><i class="ti ti-inbox"></i>Nenhum e-mail encontrado com esse filtro.</div>';return}
+  el.innerHTML=gml.res.map(function(m,i){var v=gmVinculado(m.id),c=v||m.cli;
+    return'<div onclick="gmAbrir('+i+')" style="cursor:pointer;padding:9px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start">'+
+      '<div style="flex:1;min-width:0"><div style="display:flex;gap:8px;align-items:baseline"><span style="font-size:12px;'+(m.naoLido?'font-weight:700':'')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%">'+esc(gmRemetente(m.de))+'</span><span style="font-size:11px;color:var(--text3);margin-left:auto;white-space:nowrap">'+(m.data?fmt(gcalDataSP(m.data))+' '+gcalHoraSP(m.data):'')+'</span></div>'+
+      '<div style="font-size:13px;'+(m.naoLido?'font-weight:700':'font-weight:600')+';margin:2px 0">'+gmEtqHtml(m.etq)+esc(m.assunto)+'</div>'+
+      '<div style="font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(m.snippet)+'</div>'+
+      ((c||m.prot)?'<div style="font-size:11px;margin-top:3px;color:var(--wine2)">'+(c?'<i class="ti ti-user"></i> '+esc(c.nome)+(v?' (vinculado)':' (provável)')+' ':'')+(m.prot?' <i class="ti ti-hash"></i> Protocolo '+esc(m.prot):'')+'</div>':'')+
+      '</div></div>'}).join('');
+}
+function gmB64(s){s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');try{var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new TextDecoder('utf-8').decode(u)}catch(e){return''}}
+function gmCorpo(p){
+  var txt='',html='',anexos=[];
+  (function andar(x){if(!x)return;var mt=String(x.mimeType||'').toLowerCase();
+    if(x.filename){anexos.push(x.filename);return}
+    if(mt==='text/plain'&&x.body&&x.body.data&&!txt)txt=gmB64(x.body.data);
+    else if(mt==='text/html'&&x.body&&x.body.data&&!html)html=gmB64(x.body.data);
+    (x.parts||[]).forEach(andar)})(p);
+  if(!txt&&html){try{var d=new DOMParser().parseFromString(html.replace(/<(br|\/p|\/div|\/tr|\/li|\/h\d)[^>]*>/gi,'$&\n'),'text/html');d.querySelectorAll('script,style').forEach(function(n){n.remove()});txt=d.body.textContent||''}catch(e){txt=''}}
+  return{txt:String(txt).replace(/\n{3,}/g,'\n\n').trim(),anexos:anexos};
+}
+function gmAbrir(i){
+  var m=gml.res&&gml.res[i];if(!m)return;gml.atual=i;
+  document.getElementById('gml-t').textContent=m.assunto;
+  document.getElementById('gml-cab').innerHTML='<b>De:</b> '+esc(m.de)+'<br><b>Data:</b> '+(m.data?fmt(gcalDataSP(m.data))+' '+gcalHoraSP(m.data):'')+(m.prot?'<br><b>Protocolo:</b> '+esc(m.prot):'')+(m.etq.length?'<div style="margin-top:4px">'+gmEtqHtml(m.etq)+'</div>':'');
+  document.getElementById('gml-corpo').textContent='Carregando…';document.getElementById('gml-anx').innerHTML='';
+  document.getElementById('gml-link').href=gmLinkGmail(m);
+  gmCliPreencher(m);openModal('mGmLer');
+  var pronto=gml.abertos[m.id]?Promise.resolve(gml.abertos[m.id]):gmFetch('messages/'+m.id+'?format=full').then(function(j){var c=gmCorpo(j.payload);gml.abertos[m.id]=c;return c});
+  pronto.then(function(c){if(gml.atual!==i)return;
+    document.getElementById('gml-corpo').textContent=c.txt||'(sem texto — abra no Gmail)';
+    document.getElementById('gml-anx').innerHTML=c.anexos.length?'<i class="ti ti-paperclip"></i> Anexos: '+c.anexos.map(esc).join(', ')+' — baixe pelo Gmail.':'';
+    var mais=gmEtiquetas(c.txt);mais.forEach(function(e){if(!m.etq.some(function(x){return x.k===e.k}))m.etq.push(e)});if(!m.prot)m.prot=gmProtocolo(c.txt);if(!m.cli&&!gmVinculado(m.id)){m.cli=gmAcharCliente(c.txt);gmCliPreencher(m)}
+  }).catch(function(e){document.getElementById('gml-corpo').textContent='Não foi possível abrir: '+(e&&e.message||e)});
+}
+function gmCliPreencher(m){var v=gmVinculado(m.id),c=v||m.cli,inp=document.getElementById('gml-cli');cliAutocomplete('gml-cli');inp.value=c?c.nome:'';inp.dataset.cliId=c?c.id:'';
+  document.getElementById('gml-vinc').innerHTML=v?'<i class="ti ti-link"></i> Vinculado a <b>'+esc(v.nome)+'</b> <a href="#" onclick="event.preventDefault();gmDesvincular()">desfazer</a>':(m.cli?'<i class="ti ti-sparkles"></i> Cliente provável pelo texto do e-mail — confira antes de vincular.':'')}
+function gmCliSel(){var inp=document.getElementById('gml-cli'),c=cliPorId(inp.dataset.cliId);if(c&&c.nome===inp.value.trim())return c;c=cliPorNome(inp.value);return c||null}
+function gmVincular(silencioso){
+  var m=gml.res&&gml.res[gml.atual];if(!m)return null;var c=gmCliSel();if(!c){if(!silencioso)alert('Escolha um cliente cadastrado.');return null}
+  clientes.forEach(function(x){if(x.emails)x.emails=x.emails.filter(function(e){return e.id!==m.id})});
+  c.emails=c.emails||[];c.emails.unshift({id:m.id,thread:m.threadId,assunto:m.assunto,de:gmRemetente(m.de),data:m.data,prot:m.prot||'',etq:m.etq.map(function(e){return e.n}).join(', '),em:todayStr,por:sbUser?sbUser.email:''});
+  saveAll();gmCliPreencher(m);gmRenderLista();if(!silencioso)toast('E-mail vinculado a '+esc(c.nome)+'.','ok');return c;
+}
+function gmDesvincular(){var m=gml.res&&gml.res[gml.atual];if(!m)return;clientes.forEach(function(x){if(x.emails)x.emails=x.emails.filter(function(e){return e.id!==m.id})});saveAll();gmCliPreencher(m);gmRenderLista()}
+function gmTextoBase(m){return m.assunto+(m.prot?' — protocolo '+m.prot:'')}
+function gmCriar(tipo){
+  var m=gml.res&&gml.res[gml.atual];if(!m)return;var c=gmCliSel();if(c)gmVincular(true);
+  var ps=c?procsDoCli(c):[],pid=ps.length===1?ps[0].id:'',obs='E-mail de '+gmRemetente(m.de)+' em '+(m.data?fmt(gcalDataSP(m.data)):'')+(m.etq.length?' ['+m.etq.map(function(e){return e.n}).join(', ')+']':'')+'\n'+gmLinkGmail(m);
+  closeModal('mGmLer');
+  if(tipo==='prazo'){openPrazoModal();setTimeout(function(){if(pid){selProcOpts('fpr-proc',pid)}document.getElementById('fpr-desc').value=(m.etq.some(function(e){return e.k==='exig'})?'Cumprir exigência — ':'')+gmTextoBase(m)+(c&&!pid?' — '+c.nome:'');document.getElementById('fpr-tipo').value='outro';if(m.data)document.getElementById('fpr-pub').value=gcalDataSP(m.data);document.getElementById('fpr-obs').value=obs+'\nConfira no e-mail/Meu INSS o prazo indicado.'},30)}
+  else{openTarModal();setTimeout(function(){if(pid)selProcOpts('ft-proc',pid);document.getElementById('ft-titulo').value=gmTextoBase(m)+(c?' — '+c.nome:'');document.getElementById('ft-obs').value=obs},30)}
+}
+function gmFiltrosAbrir(){document.getElementById('gmf-txt').value=gmFiltros().map(function(f){return f.nome+' | '+f.q}).join('\n');openModal('mGmFiltros')}
+function gmFiltrosSalvar(padrao){
+  if(padrao){delete cfg.gmFiltros}else{
+    var l=document.getElementById('gmf-txt').value.split('\n').map(function(s){var i=s.indexOf('|');return i<0?null:{nome:s.slice(0,i).trim(),q:s.slice(i+1).trim()}}).filter(function(f){return f&&f.nome&&f.q});
+    if(!l.length){alert('Escreva ao menos um filtro no formato: Nome | consulta');return}cfg.gmFiltros=l}
+  gml.filtro=0;gml.res=null;cfgSalvar('Filtros de e-mail salvos.');closeModal('mGmFiltros');if(currentTab==='agenda')gmRenderCard();if(gmConectado())gmBuscar();
+}
+function gmFichaHtml(c){var l=c.emails||[];if(!l.length)return'';
+  return'<div class="dps"><h4>E-mails vinculados ('+l.length+')</h4>'+l.slice(0,8).map(function(e){return'<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><a href="https://mail.google.com/mail/?authuser='+encodeURIComponent(gcalConta())+'#all/'+esc(e.thread||e.id)+'" target="_blank" style="font-weight:600">'+esc(e.assunto)+'</a><div style="color:var(--text3);font-size:11px">'+esc(e.de||'')+(e.data?' · '+fmt(gcalDataSP(e.data)):'')+(e.prot?' · protocolo '+esc(e.prot):'')+(e.etq?' · '+esc(e.etq):'')+'</div></div>'}).join('')+'</div>';
 }
 
 // ===================== GOOGLE DRIVE — cópia dos clientes e dos documentos (o Supabase continua sendo o principal) =====================
