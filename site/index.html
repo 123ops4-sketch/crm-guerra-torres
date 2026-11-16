@@ -454,7 +454,7 @@ body.com-crono{padding-bottom:76px}
 .e2-equipe{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:12px}
 .e2-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:9px 10px}
 .e2-card-h{display:flex;align-items:center;gap:8px;margin-bottom:7px}.e2-card-h b{font-size:13px;display:block}.e2-card-h small{font-size:10px;color:var(--text3)}
-.e2-st{margin-left:auto;font-size:10px;font-weight:600;color:var(--text3);text-align:right;max-width:46%}.e2-st.trabalhando{color:#15803d}.e2-st.lazer{color:#7c3aed}.e2-pet .e2-nome{background:rgba(124,45,18,.75);font-size:6px}.e2-st.indo,.e2-st.entregando{color:#b45309}
+.e2-st{margin-left:auto;font-size:10px;font-weight:600;color:var(--text3);text-align:right;max-width:46%}.e2-st.trabalhando{color:#15803d}.e2-st.lazer{color:#7c3aed}.e2-st.fora{color:#9ca3af}.e2-exp{font-size:12px;padding:7px 12px;border-radius:var(--r);margin-bottom:10px;background:var(--cream);color:var(--text2);border:1px solid var(--border)}.e2-exp.almoco,.e2-exp.lanche{background:#fef3c7;border-color:#fcd34d}.e2-exp.fora{background:#f1f5f9;border-color:#cbd5e1}.e2-pet .e2-nome{background:rgba(124,45,18,.75);font-size:6px}.e2-st.indo,.e2-st.entregando{color:#b45309}
 .e2-card-b{display:flex;flex-wrap:wrap;gap:4px}
 .e2-lado{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;position:sticky;top:10px}
 .e2-lado-h{padding:10px 12px;font-weight:700;font-size:13px;color:var(--wine2);border-bottom:1px solid var(--border);background:var(--cream)}
@@ -722,6 +722,15 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 <div class="modal" style="max-width:520px"><div class="mh"><h2><i class="ti ti-users"></i> Renomear a equipe</h2><button class="btn bo bs" onclick="closeModal('mE2Nomes')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
 <div class="mb"><div style="font-size:12px;color:var(--text3);margin-bottom:10px">Os nomes valem para todo o escritório e aparecem no mapa, nos cartões e nas entregas.</div><div class="fg" id="e2n-lista"></div></div>
 <div class="mf"><button class="btn bo" onclick="e2RenomearSalvar(true)" style="margin-right:auto"><i class="ti ti-restore"></i> Nomes originais</button><button class="btn bo" onclick="closeModal('mE2Nomes')">Cancelar</button><button class="btn bp" onclick="e2RenomearSalvar()"><i class="ti ti-check"></i> Salvar</button></div>
+</div></div>
+<div id="mE2Hor" class="overlay hidden" onclick="if(event.target.id==='mE2Hor')closeModal('mE2Hor')">
+<div class="modal" style="max-width:480px"><div class="mh"><h2><i class="ti ti-clock"></i> Expediente da equipe</h2><button class="btn bo bs" onclick="closeModal('mE2Hor')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div style="font-size:12px;color:var(--text3);margin-bottom:10px">No expediente a equipe fica nas salas; no almoço e no lanche vai para a Copa; fora do horário vai embora (se você pedir algo, alguém volta e faz hora extra).</div>
+<div class="fg"><div class="fgr"><label>Início</label><input type="time" id="e2h-ini"></div><div class="fgr"><label>Fim</label><input type="time" id="e2h-fim"></div>
+<div class="fgr"><label>Almoço: das</label><input type="time" id="e2h-almIni"></div><div class="fgr"><label>às</label><input type="time" id="e2h-almFim"></div>
+<div class="fgr"><label>Lanche: das</label><input type="time" id="e2h-lanIni"></div><div class="fgr"><label>às</label><input type="time" id="e2h-lanFim"></div>
+<div class="fgr full"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;margin:0"><input type="checkbox" id="e2h-fds" style="width:auto"> Sábado e domingo: escritório fechado</label></div></div></div>
+<div class="mf"><button class="btn bo" onclick="e2ExpSalvar(true)" style="margin-right:auto"><i class="ti ti-restore"></i> Padrão</button><button class="btn bo" onclick="closeModal('mE2Hor')">Cancelar</button><button class="btn bp" onclick="e2ExpSalvar()"><i class="ti ti-check"></i> Salvar</button></div>
 </div></div>
 <div id="mHonAv" class="overlay hidden" onclick="if(event.target.id==='mHonAv')closeModal('mHonAv')">
 <div class="modal" style="max-width:560px"><div class="mh"><h2 id="mHonAvT">Honorários sem processo</h2><button class="btn bo bs" onclick="closeModal('mHonAv')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
@@ -6562,9 +6571,16 @@ function e2Passo(dt,instant){
       return;
     }
     if(f.estado==='trabalhando'&&f.res&&E2.t-f.ini>=f.dur){e2Concluir(f);return}
+    if(f.fora&&f.fila.length){f.fora=false;f.x=E2_SAIDA.x;f.y=E2_SAIDA.y;f.estado='parado';e2Balao(f,'Hora extra… vamos lá!',2)}
     if((f.estado==='parado'||f.estado==='lazer')&&f.fila.length){if(f.estado==='lazer')e2Balao(f,'Opa, trabalho!',1.5);e2SairLazer(f);e2Iniciar(f);e2Equipe();return}
-    if(f.estado==='lazer'){e2Lazer(f);return}
-    if(f.estado==='parado'&&!instant&&!f.fila.length){f.ocioso=(f.ocioso||0)+dt;if(!f.limOcio)f.limOcio=6+Math.random()*12;if(f.ocioso>=f.limOcio){f.limOcio=0;e2IrLazer(f);e2Equipe();return}}
+    if(f.fora)return;
+    var per=instant?'trabalho':e2Expediente();
+    if(f.estado==='lazer'){if(per==='trabalho'){e2VoltarMesa(f,'De volta ao trabalho!');e2Equipe();return}if(per==='fora'){e2IrEmbora(f);e2Equipe();return}e2Lazer(f);return}
+    if(f.estado==='parado'&&!instant&&!f.fila.length){
+      if(per==='fora'){f.ocioso=(f.ocioso||0)+dt;if(!f.limSaida)f.limSaida=1+Math.random()*8;if(f.ocioso>=f.limSaida){f.limSaida=0;f.ocioso=0;e2IrEmbora(f);e2Equipe()}return}
+      if(per==='almoco'||per==='lanche'){f.ocioso=(f.ocioso||0)+dt;if(!f.limOcio)f.limOcio=1+Math.random()*10;if(f.ocioso>=f.limOcio){f.limOcio=0;e2IrLazer(f);if(Math.random()<0.7)e2Balao(f,per==='almoco'?'Hora do almoço!':'Hora do lanche!',2);e2Equipe();return}}
+      else{f.ocioso=0;if(!f.sentado&&!f.caminho.length){var mm=E2_PONTOS[f.sala].mesa;if(Math.abs(f.x-mm.x)+Math.abs(f.y-mm.y)>2){e2VoltarMesa(f);return}f.sentado=true}}
+    }
     if(f.estado==='parado'&&!instant&&Math.random()<dt*0.02&&!f.sentado){var m=E2_PONTOS[f.sala].mesa;e2Ir(f,[{x:m.x,y:f.y},m],function(){f.sentado=true})}
   });
   if(!instant)e2PetsPasso(dt);
@@ -6664,6 +6680,33 @@ function e2Copa(c,s){
   e2Ret(c,x+52,210,18,6,'#92400e');e2Ret(c,x+53,211,16,4,'#fca5a5');e2Ret(c,x+70,212,4,3,'#6b7280');
   e2PetsInit();E2.pets.slice().sort(function(a,b){return a.y-b.y}).forEach(function(pt){e2PetDesenhar(c,pt)});
 }
+
+// ---------- expediente: 8h–18h na mesa; almoço e lanche na copa; fora do horário vão embora ----------
+var E2_HOR_PADRAO={ini:'08:00',fim:'18:00',almIni:'12:00',almFim:'13:00',lanIni:'15:30',lanFim:'15:50',fimSemana:true};
+function e2Hor(){return Object.assign({},E2_HOR_PADRAO,cfg.e2Horario||{})}
+function e2Hf(h){var p=String(h||'').split(':');return(+p[0])+'h'+(p[1]&&p[1]!=='00'?p[1]:'')}
+function e2Min(h){var p=String(h||'0:0').split(':');return(+p[0]||0)*60+(+p[1]||0)}
+function e2Agora(){return E2.agoraTeste||new Date()}
+function e2Expediente(){
+  var h=e2Hor(),d=e2Agora(),m=d.getHours()*60+d.getMinutes(),dia=d.getDay();
+  if(h.fimSemana&&(dia===0||dia===6))return'fora';
+  if(m<e2Min(h.ini)||m>=e2Min(h.fim))return'fora';
+  if(m>=e2Min(h.almIni)&&m<e2Min(h.almFim))return'almoco';
+  if(m>=e2Min(h.lanIni)&&m<e2Min(h.lanFim))return'lanche';
+  return'trabalho';
+}
+var E2_PER_TXT={trabalho:'Expediente',almoco:'Horário de almoço',lanche:'Hora do lanche',fora:'Fora do expediente'};
+var E2_SAIDA={x:6,y:112};
+function e2IrEmbora(f){f.estado='saindo';f.sentado=false;e2SairLazer(f);e2Balao(f,['Até amanhã!','Tchau, pessoal!','Fui!'][Math.floor(Math.random()*3)],2);
+  e2Ir(f,e2Rota(f,E2_SAIDA,null),function(){f.fora=true;f.estado='parado'})}
+function e2VoltarMesa(f,txt){var m=E2_PONTOS[f.sala].mesa;e2SairLazer(f);f.estado='voltando';if(txt)e2Balao(f,txt,2);e2Ir(f,e2Rota(f,m,e2Sala(f.sala)),function(){f.estado='parado';f.sentado=true;f.dir=1})}
+function e2ExpModal(){var h=e2Hor();['ini','fim','almIni','almFim','lanIni','lanFim'].forEach(function(k){document.getElementById('e2h-'+k).value=h[k]});document.getElementById('e2h-fds').checked=!!h.fimSemana;openModal('mE2Hor')}
+function e2ExpSalvar(padrao){
+  if(padrao)delete cfg.e2Horario;
+  else{var o={};['ini','fim','almIni','almFim','lanIni','lanFim'].forEach(function(k){o[k]=document.getElementById('e2h-'+k).value||E2_HOR_PADRAO[k]});o.fimSemana=document.getElementById('e2h-fds').checked;
+    if(e2Min(o.fim)<=e2Min(o.ini)){alert('O fim do expediente deve ser depois do início.');return}cfg.e2Horario=o}
+  saveAll();closeModal('mE2Hor');e2Equipe();toast('Horários da equipe salvos.','ok');
+}
 // ---------- registro de atividades ----------
 function e2Registrar(f,t,r){
   var id='e2a'+(++E2.seq);E2.acoes[id]=r.acoes||[];
@@ -6708,10 +6751,10 @@ function renderEscritorio2D(){
   e2Init();e2AplicarNomes();
   if(!document.getElementById('e2-fonte')){var l=document.createElement('link');l.id='e2-fonte';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';document.head.appendChild(l)}
   var sug=[['Rotina do dia','rotina'],['O que vai entrar em 15 dias','o que vai entrar nos próximos 15 dias'],['O que entrou no mês','o que entrou este mês'],['Checar intimações','checar intimações'],['Prazos da semana','prazos da semana'],['Audiências','audiências'],['Cobrar vencidos','cobrar vencidos'],['Aniversariantes','aniversariantes'],['Atualizar andamentos','atualizar andamentos'],['Relatório do mês','relatório do mês'],['O que vocês sabem fazer?','ajuda']];
-  document.getElementById('tab-content').innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-device-gamepad-2"></i></div><h2>Escritório 2D</h2></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:12px;color:var(--text3)">Clique num funcionário ou escreva o pedido. Ele vai ao setor, faz e traz o resultado.</span><button class="btn bo bs" onclick="e2RenomearAbrir()"><i class="ti ti-pencil"></i> Renomear equipe</button></div></div>'+
+  document.getElementById('tab-content').innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-device-gamepad-2"></i></div><h2>Escritório 2D</h2></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:12px;color:var(--text3)">Clique num funcionário ou escreva o pedido. Ele vai ao setor, faz e traz o resultado.</span><button class="btn bo bs" onclick="e2RenomearAbrir()"><i class="ti ti-pencil"></i> Renomear equipe</button><button class="btn bo bs" onclick="e2ExpModal()"><i class="ti ti-clock"></i> Expediente</button></div></div>'+
     '<div class="e2-cmd"><i class="ti ti-message-chatbot"></i><input id="e2-cmd" placeholder="Pergunte à equipe: o que vai entrar nos próximos 15 dias? · o que entrou em outubro? · tarefa: ligar para Maria amanhã" onkeydown="if(event.key===\'Enter\')e2Enviar()" autocomplete="off"><button class="btn bp" onclick="e2Enviar()"><i class="ti ti-send"></i> Pedir</button></div>'+
     '<div class="e2-sug">'+sug.map(function(x){return'<button onclick="e2Comando(\''+x[1]+'\')">'+esc(x[0])+'</button>'}).join('')+'</div>'+
-    '<div class="e2-grid"><div class="e2-mapa-w"><div class="e2-mapa" id="e2-mapa"><canvas id="e2-cv" width="'+(E2_W*E2_ESC)+'" height="'+(E2_H*E2_ESC)+'" onclick="e2Clique(event)" onmousemove="e2Hover(event)"></canvas><div id="e2-ov"></div><div id="e2-menu" class="e2-menu hidden"></div></div><div class="e2-equipe" id="e2-equipe"></div></div>'+
+    '<div id="e2-exp" class="e2-exp"></div><div class="e2-grid"><div class="e2-mapa-w"><div class="e2-mapa" id="e2-mapa"><canvas id="e2-cv" width="'+(E2_W*E2_ESC)+'" height="'+(E2_H*E2_ESC)+'" onclick="e2Clique(event)" onmousemove="e2Hover(event)"></canvas><div id="e2-ov"></div><div id="e2-menu" class="e2-menu hidden"></div></div><div class="e2-equipe" id="e2-equipe"></div></div>'+
     '<div class="e2-lado"><div class="e2-lado-h"><i class="ti ti-clipboard-list"></i> Entregas da equipe</div><div id="e2-log" class="e2-log"></div></div></div>';
   var cv=document.getElementById('e2-cv');E2.cv=cv;E2.ctx=cv.getContext?cv.getContext('2d'):null;E2.semCtx=!E2.ctx;
   if(E2.ctx){E2.ctx.imageSmoothingEnabled=false}
@@ -6722,10 +6765,11 @@ function renderEscritorio2D(){
 }
 function e2Equipe(){
   var box=document.getElementById('e2-equipe');if(!box||!E2.func)return;
-  var est={parado:'Na mesa',indo:'Indo ao setor',trabalhando:'Trabalhando…',entregando:'Levando o resultado',voltando:'Voltando',pausa:'Indo para a copa'};
+  var est={parado:'Na mesa',indo:'Indo ao setor',trabalhando:'Trabalhando…',entregando:'Levando o resultado',voltando:'Voltando',pausa:'Indo para a copa',saindo:'Indo embora'};
   var html=E2.func.map(function(f){var ts=E2_TAREFAS.filter(function(t){return t.func===f.id&&!t.oculta});
-    return'<div class="e2-card"><div class="e2-card-h"><span class="e2-av" style="background:'+f.camisa+'">'+esc(f.nome[0])+'</span><div><b>'+esc(f.nome)+'</b><small>'+esc(f.cargo)+'</small></div><span class="e2-st '+f.estado+'">'+(f.tarefa?esc(f.tarefa.nome):f.estado==='lazer'&&f.spot?'Na copa: '+E2_ATV[f.spot.act]:est[f.estado]||'')+(f.progTxt&&f.estado==='trabalhando'?' '+esc(f.progTxt):'')+(f.fila.length?' · +'+f.fila.length:'')+'</span></div>'+
+    return'<div class="e2-card"><div class="e2-card-h"><span class="e2-av" style="background:'+f.camisa+'">'+esc(f.nome[0])+'</span><div><b>'+esc(f.nome)+'</b><small>'+esc(f.cargo)+'</small></div><span class="e2-st '+(f.fora?'fora':f.estado)+'">'+(f.tarefa?esc(f.tarefa.nome):f.fora?'Fora do expediente':f.estado==='lazer'&&f.spot?'Na copa: '+E2_ATV[f.spot.act]:est[f.estado]||'')+(f.progTxt&&f.estado==='trabalhando'?' '+esc(f.progTxt):'')+(f.fila.length?' · +'+f.fila.length:'')+'</span></div>'+
       '<div class="e2-card-b">'+ts.map(function(t){return'<button onclick="e2Pedir(\''+t.id+'\')">'+esc(t.nome)+'</button>'}).join('')+'</div></div>'}).join('');
+  var per=e2Expediente(),h=e2Hor(),ex=document.getElementById('e2-exp');if(ex){var t='<i class="ti ti-clock"></i> <b>'+E2_PER_TXT[per]+'</b> · equipe das '+e2Hf(h.ini)+' às '+e2Hf(h.fim)+', almoço '+e2Hf(h.almIni)+'–'+e2Hf(h.almFim)+', lanche '+e2Hf(h.lanIni)+'–'+e2Hf(h.lanFim)+(per==='fora'?' · pedidos agora viram hora extra':'');if(ex.dataset.h!==t){ex.innerHTML=t;ex.dataset.h=t;ex.className='e2-exp '+per}}
   if(box.dataset.h!==html){box.innerHTML=html;box.dataset.h=html}
 }
 function e2Coord(ev){var r=E2.cv.getBoundingClientRect();return{x:(ev.clientX-r.left)/r.width*E2_W,y:(ev.clientY-r.top)/r.height*E2_H}}
@@ -6762,7 +6806,7 @@ function e2Desenhar(){
   e2Planta(c,372,140);e2Ret(c,296,140,26,14,'#7c4a21');for(var bk=0;bk<6;bk++)e2Ret(c,298+bk*4,142,3,10,['#9b2235','#1d4ed8','#c9a84c'][bk%3]);e2Ret(c,312,206,48,10,'#9b2235');e2Ret(c,314,208,44,6,'#b8394f');
   e2Advogados().forEach(function(a){e2Boneco(c,a,false);e2Mesa(c,a.x,a.y+4)});
   // equipe (ordenada por y)
-  E2.func.slice().sort(function(a,b){return a.y-b.y}).forEach(function(f){
+  E2.func.filter(function(f){return!f.fora}).sort(function(a,b){return a.y-b.y}).forEach(function(f){
     var trab=f.estado==='trabalhando'||(f.estado==='lazer'&&f.spot&&f.spot.act!=='fofoca'),pts=E2_PONTOS[f.sala];
     e2Boneco(c,f,trab);
     if(f.sentado&&!f.caminho.length){var m=pts.mesa;e2Mesa(c,m.x,m.y+4,f.camisa)}
@@ -6797,7 +6841,7 @@ function e2Boneco(c,f,trab){
 function e2Overlay(){
   (E2.pets||[]).forEach(function(pt){var tag=document.getElementById('e2-pet-'+pt.id);if(!tag)return;tag.style.left=(pt.x/E2_W*100)+'%';tag.style.top=((pt.y-12)/E2_H*100)+'%';var b=tag.querySelector('.e2-bal'),txt=pt.balao&&pt.balao.ate>E2.t?pt.balao.txt:(pt.estado==='dormindo'?'zzz':'');if(b.textContent!==txt)b.textContent=txt;b.classList.toggle('hidden',!txt)});
   E2.func.forEach(function(f){
-    var tag=document.getElementById('e2-tag-'+f.id);if(!tag)return;
+    var tag=document.getElementById('e2-tag-'+f.id);if(!tag)return;tag.style.display=f.fora?'none':'';
     tag.style.left=(f.x/E2_W*100)+'%';tag.style.top=((f.y-20)/E2_H*100)+'%';
     var b=tag.querySelector('.e2-bal'),pr=tag.querySelector('.e2-prog');
     var txt=f.balao&&f.balao.ate>E2.t?f.balao.txt:(f.estado==='trabalhando'?'…':'');
