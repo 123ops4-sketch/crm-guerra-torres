@@ -431,6 +431,7 @@ body.com-crono{padding-bottom:76px}
 .h-add{color:#15803d;background:#f0fdf4;padding:1px 7px;border-radius:999px}.h-mod{color:#b45309;background:#fffbeb;padding:1px 7px;border-radius:999px}.h-rem{color:#b91c1c;background:#fef2f2;padding:1px 7px;border-radius:999px}
 .hist-d{margin-top:6px;font-size:12px;color:var(--text2);line-height:1.6}.hist-d a{color:var(--wine);font-weight:600}
 /* Jurisprudência */
+.kb-nota{font-size:11px;background:#fef9c3;border-left:3px solid #facc15;border-radius:4px;padding:4px 6px;margin-top:5px;white-space:pre-wrap;color:#713f12;line-height:1.4}.kb-nota-b{float:right;border:none;background:transparent;color:var(--text3);cursor:pointer;padding:0 0 0 4px;font-size:13px;opacity:.55}.kb-card:hover .kb-nota-b{opacity:1}.kb-nota-b:hover{color:var(--wine)}.kb-escolha{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px}.kb-escolha .btn{justify-content:center}
 .kb-card-cli{border-left:3px dashed #94a3b8}
 /* Escritório 2D */
 .e2-cmd{display:flex;gap:8px;align-items:center;background:var(--white);border:1px solid var(--border2);border-radius:var(--r2);padding:6px 6px 6px 12px;margin-bottom:8px}
@@ -731,6 +732,13 @@ mark.jp-mk{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
 <div class="fgr"><label>Lanche: das</label><input type="time" id="e2h-lanIni"></div><div class="fgr"><label>às</label><input type="time" id="e2h-lanFim"></div>
 <div class="fgr full"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;margin:0"><input type="checkbox" id="e2h-fds" style="width:auto"> Sábado e domingo: escritório fechado</label></div></div></div>
 <div class="mf"><button class="btn bo" onclick="e2ExpSalvar(true)" style="margin-right:auto"><i class="ti ti-restore"></i> Padrão</button><button class="btn bo" onclick="closeModal('mE2Hor')">Cancelar</button><button class="btn bp" onclick="e2ExpSalvar()"><i class="ti ti-check"></i> Salvar</button></div>
+</div></div>
+<div id="mKbFase" class="overlay hidden" onclick="if(event.target.id==='mKbFase')closeModal('mKbFase')">
+<div class="modal" style="max-width:480px"><div class="mh"><h2><i class="ti ti-layout-kanban"></i> <span id="mKbFaseT"></span></h2><button class="btn bo bs" onclick="closeModal('mKbFase')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div id="kbf-escolha"></div><div id="kbf-aviso" class="calc-aviso" style="display:none;margin-top:0">Este cliente já tem processo: no quadro ele aparece pelo processo.</div>
+<div class="fg"><div class="fgr full"><label>Fase no quadro "<span id="kbf-qnome"></span>"</label><select id="kbf-col"></select></div>
+<div class="fgr full"><label>Anotação só deste quadro</label><textarea id="kbf-nota" style="min-height:90px" placeholder="Ex.: aguardando CNIS; ligar sexta; cliente vai trazer a carteira de trabalho"></textarea><div style="font-size:11px;color:var(--text3);margin-top:4px">Fica só no cartão deste quadro: não vai para andamentos, tarefas, agenda nem para a ficha.</div></div></div></div>
+<div class="mf"><button class="btn bo" onclick="closeModal('mKbFase')">Cancelar</button><button class="btn bp" onclick="kbFaseSalvar()"><i class="ti ti-check"></i> Salvar</button></div>
 </div></div>
 <div id="mHonAv" class="overlay hidden" onclick="if(event.target.id==='mHonAv')closeModal('mHonAv')">
 <div class="modal" style="max-width:560px"><div class="mh"><h2 id="mHonAvT">Honorários sem processo</h2><button class="btn bo bs" onclick="closeModal('mHonAv')" aria-label="Fechar"><i class="ti ti-x"></i></button></div>
@@ -2888,7 +2896,7 @@ function openPanel(id){
     honPainelHtml(p.id)+
     jpPainelHtml(p.id)+
     (p.obs?'<div class="dps"><h4>Observações</h4><div style="font-size:12px;color:var(--text);line-height:1.5;white-space:pre-wrap">'+esc(p.obs)+'</div></div>':'')+
-    '<div class="dps"><h4>Quadro — cartões em aberto ('+pT.length+')</h4>'+(pT.length?pT.map(function(t){return kbTarefaLinha(t,false)}).join(''):'<div style="color:var(--text3);font-size:12px;margin-bottom:6px">Nenhum cartão em aberto.</div>')+'<button class="btn bg bs" style="width:100%;justify-content:center;margin-top:7px" onclick="kbNovoCartaoPara(\''+p.id+'\',\'\')"><i class="ti ti-plus"></i> Novo cartão / tarefa</button></div>'+
+    '<div class="dps"><h4>Quadro — cartões em aberto ('+pT.length+')</h4>'+(pT.length?pT.map(function(t){return kbTarefaLinha(t,false)}).join(''):'<div style="color:var(--text3);font-size:12px;margin-bottom:6px">Nenhum cartão em aberto.</div>')+(kbNotaDe(p,'kb-proc')?'<div class="kb-nota" style="margin-top:6px"><i class="ti ti-note"></i> '+esc(kbNotaDe(p,'kb-proc'))+'</div>':'')+'<div style="font-size:11px;color:var(--text3);margin-top:8px">Colocar no quadro:</div>'+kbEscolherQuadroHtml(p.id,p.cliId||'')+'</div>'+
     '<div class="dps"><h4>Intimações ('+pI.length+')</h4>'+(pI.length?pI.map(function(i){return'<div style="background:var(--cream);border:1px solid var(--border);border-left:3px solid #7c3aed;border-radius:var(--r);padding:8px 10px;margin-bottom:6px"><div style="font-size:10px;color:#7c3aed;font-weight:600">'+esc(i.portal)+' · '+esc(i.st)+'</div><div style="font-size:11px;margin-top:2px">'+esc(i.teor.slice(0,80))+'...</div></div>'}).join(''):'<div style="color:var(--text3);font-size:12px;margin-bottom:6px">Nenhuma intimação.</div>')+'<button class="btn bpur bs" style="width:100%;justify-content:center;margin-top:4px" onclick="openIntimModal();setTimeout(function(){document.getElementById(\'fi-proc\').value=\''+p.id+'\'},50)"><i class="ti ti-bell-plus"></i> Adicionar intimação</button></div>'+
     '<div class="dps"><h4>Andamentos ('+pA.length+')'+(p.djClasse?' · <span style="font-weight:400;text-transform:none">'+esc(p.djClasse)+'</span>':'')+'</h4>'+pA.slice(0,8).map(function(a){return'<div class="and-item" style="cursor:pointer" title="Clique para editar" onclick="openAndModal(\''+p.id+'\',\''+a.id+'\')"><div class="and-dot"></div><div style="flex:1"><div class="and-date">'+fmt(a.data)+' · <span style="color:var(--gold4);font-weight:600">'+esc(a.tipo)+'</span></div><div class="and-text">'+esc(a.desc)+'</div></div><i class="ti ti-pencil" style="color:var(--text3);font-size:12px"></i></div>'}).join('')+(pA.length>8?'<a style="font-size:12px;cursor:pointer;color:var(--wine)" onclick="closePanel();relProcId=\''+p.id+'\';switchTabById(\'relatorios\');setTimeout(function(){var b=document.getElementById(\'rel-proc-box\');if(b&&b.scrollIntoView)b.scrollIntoView()},50)">Ver todos os '+pA.length+' registros</a>':'')+(!pA.length?'<div style="color:var(--text3);font-size:12px;margin-bottom:6px">Nenhum andamento.</div>':'')+'<button class="btn bp bs" style="width:100%;justify-content:center;margin-top:4px" onclick="openAndModal(\''+p.id+'\')"><i class="ti ti-plus"></i> Registrar andamento</button></div>'+
     '<div class="dps"><h4>Cliente</h4>'+((cliDoProc(p)||{}).id?'<button class="btn bo bs" style="width:100%;justify-content:center;margin-bottom:6px" onclick="abrirFichaCliente(\''+cliDoProc(p).id+'\')"><i class="ti ti-id"></i> Ficha completa do cliente</button>':'')+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+
@@ -5405,7 +5413,7 @@ function kbClientesNoQuadro(q){return clientes.filter(function(c){return c.fases
 function kbItens(q){return q.tipo==='processos'?procs.concat(kbClientesNoQuadro(q)):kbTarefasDo(q)}
 function kbOrdem(item,q){return(item.kbOrd&&item.kbOrd[q.id]!=null)?item.kbOrd[q.id]:(q.tipo==='processos'?0:0)}
 function kbPassaFiltro(item,q){
-  var f=kbFiltro,txt=q.tipo==='processos'?(kbEhCli(item)?[item.nome,item.tel,item.doc,item.cid,item.kbNota].join(' '):[item.cli,item.num,item.tipoAcao,item.area].join(' ')):[item.titulo,item.obs,(agProc(item.procId)||{}).cli].join(' ');
+  var f=kbFiltro,txt=q.tipo==='processos'?(kbEhCli(item)?[item.nome,item.tel,item.doc,item.cid,kbNotaDe(item,q.id)].join(' '):[item.cli,item.num,item.tipoAcao,item.area,kbNotaDe(item,q.id)].join(' ')):[item.titulo,item.obs,(agProc(item.procId)||{}).cli].join(' ');
   if(f.q&&normTxt(txt).indexOf(normTxt(f.q))<0)return false;
   if(f.resp&&respCanon(item.resp)!==f.resp)return false;
   if(f.etq&&(item.etiquetas||[]).indexOf(f.etq)<0)return false;
@@ -5442,8 +5450,8 @@ function kbCardHtml(it,q,c){
     var nTar=tarefas.filter(function(t){return t.cliId===it.id&&!t.done}).length,docsF=docsPendentes.filter(function(d){return d.cliId===it.id&&d.status==='pendente'}).length;
     return'<div class="kb-card kb-card-cli" draggable="true" data-id="'+it.id+'" ondragstart="kbArrastar(event,\''+it.id+'\')" ondragend="kbFimArraste(event)" onclick="abrirFichaCliente(\''+it.id+'\')">'+
       '<div class="kb-etqs"><span style="background:#64748b" title="Cliente ainda sem processo cadastrado">Sem processo</span></div>'+
-      '<div class="kb-tit"><i class="ti ti-user" style="color:var(--text3)"></i> '+esc(it.nome)+'</div>'+
-      '<div class="kb-sub">'+esc([it.tel,it.cid].filter(Boolean).join(' · ')||'Cliente')+'</div>'+(it.kbNota?'<div class="kb-sub" style="font-style:italic">'+esc(it.kbNota)+'</div>':'')+
+      kbNotaBtn(it,q)+'<div class="kb-tit"><i class="ti ti-user" style="color:var(--text3)"></i> '+esc(it.nome)+'</div>'+
+      '<div class="kb-sub">'+esc([it.tel,it.cid].filter(Boolean).join(' · ')||'Cliente')+'</div>'+kbNotaHtml(it,q)+
       '<div class="kb-meta">'+(nTar?'<span class="kb-badge" title="Tarefas em aberto"><i class="ti ti-checkbox"></i> '+nTar+'</span>':'')+(docsF?'<span class="kb-badge perto" title="Documentos faltando"><i class="ti ti-file-alert"></i> '+docsF+'</span>':'')+'</div>'+
       '<select class="kb-mover" onclick="event.stopPropagation()" onchange="kbMover(\''+it.id+'\',this.value)" title="Mover para">'+q.cols.map(function(x){return'<option value="'+x.id+'"'+(x.id===c.id?' selected':'')+'>'+esc(x.nome)+'</option>'}).join('')+'<option value="__sair">— Tirar do quadro</option></select></div>';
   }
@@ -5451,7 +5459,7 @@ function kbCardHtml(it,q,c){
     var pz=prazos.filter(function(z){return z.procId===it.id&&!z.cumprido}).sort(function(a,b){return a.limite.localeCompare(b.limite)})[0];
     var hr=honResumo(it.id),venc=hr.vencidas.length;
     return'<div class="kb-card" draggable="true" data-id="'+it.id+'" ondragstart="kbArrastar(event,\''+it.id+'\')" ondragend="kbFimArraste(event)" onclick="openPanel(\''+it.id+'\')">'+
-      '<div class="kb-tit">'+esc(it.cli)+'</div><div class="kb-sub">'+esc([it.tipoAcao||it.area,it.trib].filter(Boolean).join(' · '))+'</div>'+(it.num?'<div class="kb-sub" style="font-family:ui-monospace,monospace">'+esc(it.num)+'</div>':'')+
+      kbNotaBtn(it,q)+'<div class="kb-tit">'+esc(it.cli)+'</div><div class="kb-sub">'+esc([it.tipoAcao||it.area,it.trib].filter(Boolean).join(' · '))+'</div>'+(it.num?'<div class="kb-sub" style="font-family:ui-monospace,monospace">'+esc(it.num)+'</div>':'')+kbNotaHtml(it,q)+
       '<div class="kb-meta">'+(pz?'<span class="kb-badge'+(pz.limite<todayStr?' venc':pz.limite<=addDays(todayStr,3)?' perto':'')+'" title="'+esc(pz.desc)+'"><i class="ti ti-alarm"></i> '+fmt(pz.limite).slice(0,5)+'</span>':'')+(venc?'<span class="kb-badge venc" title="Parcelas vencidas"><i class="ti ti-cash"></i> '+venc+'</span>':'')+(it.st==='Urgente'?'<span class="kb-badge venc">Urgente</span>':'')+(ini?'<span class="kb-ini" title="'+esc(r)+'">'+ini+'</span>':'')+'</div>'+
       '<select class="kb-mover" onclick="event.stopPropagation()" onchange="kbMover(\''+it.id+'\',this.value)" title="Mover para">'+q.cols.map(function(x){return'<option value="'+x.id+'"'+(x.id===c.id?' selected':'')+'>'+esc(x.nome)+'</option>'}).join('')+'</select></div>';
   }
@@ -5620,11 +5628,48 @@ function kbAddCliSalvar(colId){
   var q=kbQ();
   if(procsDoCli(c).length){if(h)h.innerHTML='<span style="color:#b45309">'+esc(c.nome)+' já tem processo: ele aparece no quadro pelo processo.</span>';return}
   var nota=(document.getElementById('kb-cli-nota-'+colId)||{}).value;
-  c.fases=Object.assign({},c.fases||{});c.fases[q.id]=colId;if(nota&&nota.trim())c.kbNota=nota.trim();
+  c.fases=Object.assign({},c.fases||{});c.fases[q.id]=colId;if(nota&&nota.trim()){c.kbNotas=Object.assign({},c.kbNotas||{});c.kbNotas[q.id]=nota.trim()}
   c.kbOrd=Object.assign({},c.kbOrd||{});c.kbOrd[q.id]=9999;
   saveAll();renderKanban();toast(esc(c.nome)+' entrou no quadro.','ok');
 }
 function kbMoverCli(cid,colId){var c=cliPorId(cid);if(!c)return;var q=kbQ('kb-proc');c.fases=Object.assign({},c.fases||{});if(colId)c.fases[q.id]=colId;else delete c.fases[q.id];saveAll();toast(colId?'Fase atualizada.':'Saiu do quadro.','ok');if(currentTab==='kanban')renderKanban()}
+
+// ---------- anotação só deste quadro (não aparece em outros lugares do sistema) ----------
+function kbNotaDe(it,qid){var n=(it.kbNotas||{})[qid];if(n==null&&qid==='kb-proc'&&it.kbNota)n=it.kbNota;return n||''}
+function kbNotaHtml(it,q){var n=kbNotaDe(it,q.id);return n?'<div class="kb-nota" title="Anotação deste quadro"><i class="ti ti-note"></i> '+esc(n)+'</div>':''}
+function kbNotaBtn(it,q){return'<button class="kb-nota-b" onclick="event.stopPropagation();kbFaseAbrir(\''+(kbEhCli(it)?'cli':'proc')+'\',\''+it.id+'\',\''+q.id+'\')" title="Escrever uma anotação só neste quadro"><i class="ti ti-pencil"></i></button>'}
+var kbFaseCtx=null;
+function kbFaseAbrir(tipo,id,qid){
+  var q=kbQ(qid||'kb-proc'),it=tipo==='cli'?cliPorId(id):procs.filter(function(x){return x.id===id})[0];if(!it)return;
+  kbFaseCtx={tipo:tipo,id:id,q:q.id};var _ke=document.getElementById('kbf-escolha');if(_ke)_ke.innerHTML='';
+  var cid=tipo==='cli'?((it.fases||{})[q.id]||''):kbColDe(it,q);
+  document.getElementById('mKbFaseT').textContent=(tipo==='cli'?it.nome:(it.cli+(it.num?' — '+it.num:'')));
+  document.getElementById('kbf-col').innerHTML=(tipo==='cli'?'<option value="">— fora do quadro —</option>':'')+q.cols.map(function(x){return'<option value="'+x.id+'"'+(x.id===cid?' selected':'')+'>'+esc(x.nome)+'</option>'}).join('');
+  document.getElementById('kbf-nota').value=kbNotaDe(it,q.id);
+  document.getElementById('kbf-qnome').textContent=q.nome;
+  document.getElementById('kbf-aviso').style.display=tipo==='cli'&&procsDoCli(it).length?'block':'none';
+  openModal('mKbFase');setTimeout(function(){document.getElementById('kbf-nota').focus()},60);
+}
+function kbFaseSalvar(){
+  var x=kbFaseCtx;if(!x)return;var q=kbQ(x.q),it=x.tipo==='cli'?cliPorId(x.id):procs.filter(function(p){return p.id===x.id})[0];if(!it)return;
+  var col=document.getElementById('kbf-col').value,nota=document.getElementById('kbf-nota').value.trim();
+  it.fases=Object.assign({},it.fases||{});if(col)it.fases[q.id]=col;else delete it.fases[q.id];
+  it.kbNotas=Object.assign({},it.kbNotas||{});if(nota)it.kbNotas[q.id]=nota;else delete it.kbNotas[q.id];if(it.kbNota)delete it.kbNota;
+  saveAll();closeModal('mKbFase');toast(col?'Salvo no quadro "'+q.nome+'".':'Saiu do quadro.','ok');
+  if(currentTab==='kanban')renderKanban();var dp=document.getElementById('detPanel');if(dp&&dp.classList.contains('open')){if(dp.dataset.cli)abrirFichaCliente(dp.dataset.cli);else if(dp.dataset.id)openPanel(dp.dataset.id)}
+}
+// escolha: tarefa do escritório ou processos por fase
+function kbEscolherQuadroHtml(procId,cliId){
+  var c=cliPorId(cliId),ps=c?procsDoCli(c):[];
+  var fase=procId?'kbFaseAbrir(\'proc\',\''+procId+'\')':(ps.length===1?'kbFaseAbrir(\'proc\',\''+ps[0].id+'\')':(ps.length?'kbFaseEscolherProc(\''+cliId+'\')':'kbFaseAbrir(\'cli\',\''+cliId+'\')'));
+  return'<div class="kb-escolha"><button class="btn bg bs" onclick="kbNovoCartaoPara(\''+(procId||(ps.length===1?ps[0].id:''))+'\',\''+(cliId||'')+'\')"><i class="ti ti-checkbox"></i> Tarefa do escritório</button><button class="btn bo bs" onclick="'+fase+'"><i class="ti ti-layout-kanban"></i> Processos por fase</button></div>';
+}
+function kbFaseEscolherProc(cliId){
+  var c=cliPorId(cliId),ps=procsDoCli(c);
+  document.getElementById('mKbFaseT').textContent=c.nome;kbFaseCtx=null;
+  document.getElementById('kbf-escolha').innerHTML='<div style="font-size:12px;margin-bottom:6px">Este cliente tem '+ps.length+' processos. Qual vai no quadro?</div>'+ps.map(function(p){return'<button class="btn bo bs" style="margin:0 6px 6px 0" onclick="document.getElementById(\'kbf-escolha\').innerHTML=\'\';kbFaseAbrir(\'proc\',\''+p.id+'\')">'+esc((p.tipoAcao||p.area||'Processo')+(p.num?' — '+p.num:''))+'</button>'}).join('');
+  document.getElementById('kbf-col').innerHTML='';document.getElementById('kbf-nota').value='';openModal('mKbFase');
+}
 function kbNovoCartaoPara(procId,cliId){
   var q=kbQ('kb-tarefas'),o={id:uid(),titulo:'Novo cartão',procId:procId||'',cliId:cliId||'',resp:respCanon(hrUltimoAdv())||'',prazo:'',prior:'normal',obs:'',done:false,kbQuadro:q.id,kbCol:q.cols[0].id,kbOrd:{},etiquetas:[],checklist:[],criadoEm:new Date().toISOString(),_novo:true};
   tarefas.unshift(o);saveAll();kbAbrirCartao(o.id);setTimeout(function(){var t=document.getElementById('kc-titulo');if(t){t.select();t.focus()}},80);
@@ -5658,7 +5703,7 @@ function abrirFichaCliente(cliId){
     '<div class="dps"><h4>Processos ('+ps.length+')</h4>'+(!ps.length?'<div class="pf"><div class="pl">Fase (quadro)</div><div class="pv"><select class="fc-fase" onchange="kbMoverCli(\''+c.id+'\',this.value)"><option value="">— fora do quadro —</option>'+qProc.cols.map(function(x){return'<option value="'+x.id+'"'+((c.fases||{})['kb-proc']===x.id?' selected':'')+'>'+esc(x.nome)+'</option>'}).join('')+'</select></div></div>':'')+(ps.length?ps.map(function(p){var cid=kbColDe(p,qProc),col=qProc.cols.filter(function(x){return x.id===cid})[0]||{};return'<div class="fc-proc"><div style="flex:1;min-width:0;cursor:pointer" onclick="openPanel(\''+p.id+'\')"><div class="fc-tar-t">'+esc(p.tipoAcao||p.area||'Processo')+'</div><div class="fc-tar-s">'+esc([p.num,p.trib,p.st].filter(Boolean).join(' · '))+'</div></div><select class="fc-fase" style="border-left:4px solid '+(col.cor||'#64748b')+'" onchange="kbMoverProc(\''+p.id+'\',this.value)" title="Fase no quadro de processos">'+qProc.cols.map(function(x){return'<option value="'+x.id+'"'+(x.id===cid?' selected':'')+'>'+esc(x.nome)+'</option>'}).join('')+'</select></div>'}).join(''):'<div style="font-size:12px;color:var(--text3)">Nenhum processo.</div>')+'</div>'+
     '<div class="dps"><h4>Quadro — cartões em aberto ('+abertas.length+')</h4>'+(abertas.length?abertas.map(function(t){return kbTarefaLinha(t,true)}).join(''):'<div style="font-size:12px;color:var(--text3)">Nenhum cartão em aberto.</div>')+
       (feitas.length?'<details style="margin-top:6px"><summary style="font-size:12px;cursor:pointer;color:var(--text3)">Concluídos ('+feitas.length+')</summary>'+feitas.slice(0,15).map(function(t){return kbTarefaLinha(t,true)}).join('')+'</details>':'')+
-      '<button class="btn bg bs" style="width:100%;justify-content:center;margin-top:7px" onclick="kbNovoCartaoPara(\''+(ps.length===1?ps[0].id:'')+'\',\''+c.id+'\')"><i class="ti ti-plus"></i> Novo cartão para este cliente</button></div>'+
+      '<div style="font-size:11px;color:var(--text3);margin-top:8px">Colocar no quadro:</div>'+kbEscolherQuadroHtml('',c.id)+'</div>'+
     '<div class="dps"><h4>Próximos compromissos</h4>'+(ag.length?ag.map(function(e){return agLinhaHtml(e,true)}).join(''):'<div style="font-size:12px;color:var(--text3)">Nada marcado.</div>')+'<button class="btn bo bs" style="width:100%;justify-content:center;margin-top:7px" onclick="openLembreteModal(todayStr);setTimeout(function(){var i=document.getElementById(\'fl-cli\');if(i){i.value=\''+esc(c.nome).replace(/'/g,'')+'\';i.dataset.cliId=\''+c.id+'\'}},60)"><i class="ti ti-calendar-plus"></i> Marcar compromisso</button></div>'+
     (hon.comb||hon.rec?'<div class="dps"><h4>Honorários</h4><div class="hon-mini"><div><span>Combinado</span><b>'+fmtM(hon.comb)+'</b></div><div><span>Recebido</span><b style="color:#15803d">'+fmtM(hon.rec)+'</b></div><div><span>Saldo</span><b style="color:#b45309">'+fmtM(hon.saldo)+'</b></div></div>'+(hon.venc?'<div style="font-size:12px;color:#b91c1c;margin-top:6px"><i class="ti ti-alert-triangle"></i> '+fmtM(hon.venc)+' vencido</div>':'')+'</div>':'')+
     '<div class="dps"><h4>Resumo</h4><div class="fc-res"><span><b>'+docs.length+'</b> documento(s) faltando</span><span><b>'+anx+'</b> anexo(s)</span><span><b>'+atend+'</b> atendimento(s)</span><span><b>'+intims.filter(function(i){return i.st==='pendente'&&(i.cliId===c.id||pids.indexOf(i.procId)>-1)}).length+'</b> intimação(ões) pendente(s)</span></div></div>';
