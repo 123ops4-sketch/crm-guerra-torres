@@ -2816,6 +2816,7 @@ function renderProdutividade(){
 function renderRelatorios(){
   var tc=document.getElementById('tab-content');
   tc.innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-file-analytics"></i></div><h2>Relatórios</h2></div></div>'+
+    rsCardHtml()+
     '<div id="rel-ger">'+relGerencialHtml()+'</div>'+
     '<div id="rel-proc-box">'+relProcHtml()+'</div>'+
     '<div class="rel-sec" style="margin:6px 0 12px">Visão geral — todo o histórico</div>'+
@@ -5003,6 +5004,95 @@ function relJanelaWord(w,titulo){
   };
 }
 
+// ===================== RELATÓRIO SEMANAL DOS PROCESSOS ATIVOS (automático, editável) =====================
+var relSems=ld('jur_rs',[]);
+STORE.jur_rs=[function(){return relSems},function(v){relSems=v}];
+NOME_LISTA.jur_rs='relatórios semanais';
+var RS_DIAS=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+var rsAtual=null,rsTimer=null,_rsAvisado='';
+function rsCfg(){var c=cfg.relSem||{};return{ativo:c.ativo!==false,dia:c.dia==null?5:+c.dia,hora:c.hora||'15:00'}}
+function rsAgoraSP(){var d=E2&&E2.agoraTeste?E2.agoraTeste:new Date();
+  var p={};try{new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false,weekday:'short'}).formatToParts(d).forEach(function(x){p[x.type]=x.value})}catch(e){}
+  var data=p.year?p.year+'-'+p.month+'-'+p.day:d.toISOString().slice(0,10),hm=p.hour?(p.hour==='24'?'00':p.hour)+':'+p.minute:d.toTimeString().slice(0,5);
+  return{data:data,hm:hm,dow:new Date(data+'T12:00').getDay()}}
+// data da última "sexta 15h" (ou o dia/hora configurados) que já passou
+function rsUltimaData(){var c=rsCfg(),a=rsAgoraSP(),volta=(a.dow-c.dia+7)%7;if(volta===0&&a.hm<c.hora)volta=7;return{data:addDays(a.data,-volta),hoje:volta===0}}
+function rsPorData(d){return relSems.filter(function(r){return r.semana===d})[0]}
+function rsFaseDe(p){var q=kbQ('kb-proc');if(!q)return'';var id=(p.fases||{})[q.id],col=q.cols.filter(function(c){return c.id===id})[0];return col?col.nome:''}
+function rsMontar(ate){
+  var ini=addDays(ate,-6),prox=addDays(ate,7),e=escritorio();
+  var ativos=procs.filter(function(p){return!_ENC[p.st]}).sort(function(a,b){return String(a.cli||'').localeCompare(String(b.cli||''))});
+  var ids={};ativos.forEach(function(p){ids[p.id]=1});
+  var andSem=function(p){return ands.filter(function(a){return a.procId===p.id&&a.data>=ini&&a.data<=ate}).sort(function(a,b){return b.data.localeCompare(a.data)})};
+  var ultAnd=function(p){var l=ands.filter(function(a){return a.procId===p.id}).map(function(a){return a.data}).sort();return l[l.length-1]||p.ab||''};
+  var pzAb=function(p){return prazos.filter(function(z){return z.procId===p.id&&!z.cumprido&&z.limite}).sort(function(a,b){return a.limite.localeCompare(b.limite)})};
+  var mov=ativos.filter(function(p){return andSem(p).length});
+  var proxL=prazos.filter(function(z){return ids[z.procId]&&!z.cumprido&&z.limite&&z.limite>ate&&z.limite<=prox}).sort(function(a,b){return(a.limite+(a.hora||'')).localeCompare(b.limite+(b.hora||''))});
+  var venc=prazos.filter(function(z){return ids[z.procId]&&!z.cumprido&&z.limite&&z.limite<=ate});
+  var intP=intims.filter(function(i){return i.st==='pendente'&&(!i.procId||ids[i.procId])});
+  var parados=ativos.filter(function(p){var u=ultAnd(p);return u&&u<addDays(ate,-60)});
+  var procDe=function(id){return procs.filter(function(p){return p.id===id})[0]||{}};
+  var th='style="text-align:left;background:#f5ece0;border:1px solid #d9c9b0;padding:6px;font-size:11px"',td='style="border:1px solid #e5d8c3;padding:6px;font-size:12px;vertical-align:top"';
+  var sec=function(t){return'<h3 style="font-family:Georgia,serif;color:#5c1220;font-size:16px;border-bottom:1px solid #d9c9b0;padding-bottom:3px;margin:20px 0 8px">'+t+'</h3>'};
+  var kpi=function(r,v,cor){return'<td style="border:1px solid #e5d8c3;padding:8px;text-align:center"><div style="font-size:10px;color:#7a6a5a;text-transform:uppercase">'+r+'</div><div style="font-size:20px;font-weight:700;color:'+(cor||'#1a0a0e')+'">'+v+'</div></td>'};
+  return'<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #7b1a2a;padding-bottom:8px;margin-bottom:12px"><div><div style="font-family:Georgia,serif;font-size:20px;font-weight:700;color:#7b1a2a">'+esc(e.nome)+'</div><div style="font-size:13px;color:#5c1220">Relatório semanal — processos ativos</div></div><div style="text-align:right;font-size:12px">Semana de '+fmt(ini)+' a '+fmt(ate)+'<br>Gerado em '+fmt(rsAgoraSP().data)+'</div></div>'+
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:6px"><tr>'+kpi('Processos ativos',ativos.length)+kpi('Movimentados na semana',mov.length,'#15803d')+kpi('Prazos/audiências próx. 7 dias',proxL.length,'#2563eb')+kpi('Prazos vencidos em aberto',venc.length,venc.length?'#b91c1c':'')+kpi('Intimações pendentes',intP.length,intP.length?'#b45309':'')+'</tr></table>'+
+    sec('Processos ativos ('+ativos.length+')')+
+    (ativos.length?'<table style="width:100%;border-collapse:collapse"><thead><tr><th '+th+'>Cliente</th><th '+th+'>Processo / ação</th><th '+th+'>Fase</th><th '+th+'>Na semana</th><th '+th+'>Próximo prazo</th><th '+th+'>Anotações</th></tr></thead><tbody>'+ativos.map(function(p){var s=andSem(p),z=pzAb(p)[0];
+      return'<tr><td '+td+'><b>'+esc(p.cli||'')+'</b>'+(p.resp?'<br><span style="color:#7a6a5a;font-size:11px">'+esc(respCanon?respCanon(p.resp):p.resp)+'</span>':'')+'</td><td '+td+'>'+esc(p.num||'sem número')+'<br><span style="color:#7a6a5a;font-size:11px">'+esc([p.tipoAcao||p.area,p.trib,p.st].filter(Boolean).join(' · '))+'</span></td><td '+td+'>'+esc(rsFaseDe(p)||'—')+'</td><td '+td+'>'+(s.length?s.slice(0,3).map(function(a){return fmt(a.data).slice(0,5)+' — '+esc(a.tipo||'Andamento')+': '+esc(String(a.desc||'').slice(0,140))}).join('<br>')+(s.length>3?'<br>+'+(s.length-3)+' registro(s)':''):'<span style="color:#9a8a7a">Sem movimentação</span>')+'</td><td '+td+'>'+(z?'<span style="'+(z.limite<=ate?'color:#b91c1c;font-weight:700':'')+'">'+fmt(z.limite)+(z.hora?' '+z.hora:'')+'</span><br>'+esc(z.desc||''):'—')+'</td><td '+td+'>&nbsp;</td></tr>'}).join('')+'</tbody></table>':'<p>Nenhum processo ativo.</p>')+
+    sec('Próxima semana — prazos e audiências')+(proxL.length?'<ul style="margin:0;padding-left:18px">'+proxL.map(function(z){var p=procDe(z.procId);return'<li style="font-size:12px;margin:3px 0"><b>'+fmt(z.limite)+(z.hora?' '+z.hora:'')+'</b> — '+(z.tipo==='audiencia'?'Audiência: ':'')+esc(z.desc||'')+' <span style="color:#7a6a5a">('+esc(p.cli||'')+(p.num?' · '+esc(p.num):'')+')</span></li>'}).join('')+'</ul>':'<p style="font-size:12px">Nada marcado.</p>')+
+    (venc.length?sec('Prazos vencidos ainda em aberto')+'<ul style="margin:0;padding-left:18px">'+venc.map(function(z){var p=procDe(z.procId);return'<li style="font-size:12px;margin:3px 0;color:#b91c1c"><b>'+fmt(z.limite)+'</b> — '+esc(z.desc||'')+' ('+esc(p.cli||'')+')</li>'}).join('')+'</ul>':'')+
+    (parados.length?sec('Sem movimentação há mais de 60 dias ('+parados.length+')')+'<ul style="margin:0;padding-left:18px">'+parados.map(function(p){return'<li style="font-size:12px;margin:3px 0">'+esc(p.cli||'')+(p.num?' — '+esc(p.num):'')+' <span style="color:#7a6a5a">(último registro: '+fmt(ultAnd(p))+')</span></li>'}).join('')+'</ul>':'')+
+    sec('Observações e encaminhamentos')+'<p style="font-size:12px;color:#7a6a5a">Escreva aqui as providências da semana…</p>';
+}
+function rsGerar(data,manual){
+  var d=data||rsUltimaData().data,id='rs-'+d,r=rsPorData(d);
+  if(r&&r.editadoEm&&manual&&!confirm('O relatório desta semana já foi editado. Gerar de novo com os dados atuais e perder as edições?'))return r;
+  var o={id:id,semana:d,html:rsMontar(d),geradoEm:new Date().toISOString(),editadoEm:'',por:sbUser?sbUser.email:'',auto:!manual};
+  relSems=relSems.filter(function(x){return x.id!==id});relSems.unshift(o);relSems.sort(function(a,b){return b.semana.localeCompare(a.semana)});relSems=relSems.slice(0,26);
+  saveAll();return o;
+}
+function rsAbrir(d){rsAtual=d||(relSems[0]&&relSems[0].semana);if(currentTab!=='relatorios')switchTabById('relatorios');else rsRedesenhar();setTimeout(function(){var c=document.getElementById('rs-card');if(c&&c.scrollIntoView)c.scrollIntoView({behavior:'smooth',block:'start'})},80)}
+function rsCardHtml(){
+  var c=rsCfg(),r=rsPorData(rsAtual)||relSems[0];if(r)rsAtual=r.semana;
+  return'<div class="card" id="rs-card" style="margin-bottom:16px"><div class="card-header" style="flex-wrap:wrap;gap:8px"><h3><i class="ti ti-calendar-stats"></i> Relatório semanal — processos ativos</h3><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
+    (relSems.length?'<select class="gt-select" onchange="rsAtual=this.value;rsRedesenhar()">'+relSems.map(function(x){return'<option value="'+x.semana+'"'+(x.semana===rsAtual?' selected':'')+'>Semana até '+fmt(x.semana)+(x.editadoEm?' (editado)':'')+'</option>'}).join('')+'</select>':'')+
+    '<button class="btn bo bs" onclick="rsAtual=rsGerar(null,true).semana;rsRedesenhar();toast(\'Relatório da semana gerado.\',\'ok\')"><i class="ti ti-refresh"></i> '+(rsPorData(rsUltimaData().data)?'Gerar de novo':'Gerar agora')+'</button>'+
+    (r?'<button class="btn bo bs" onclick="rsImprimir()"><i class="ti ti-printer"></i> Imprimir / PDF</button><button class="btn bo bs" onclick="rsWord()"><i class="ti ti-file-word"></i> Word</button>':'')+
+    '</div></div><div style="padding:8px 16px;font-size:12px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap;align-items:center"><label style="display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto"'+(c.ativo?' checked':'')+' onchange="rsCfgSalvar()" id="rs-ativo"> Gerar sozinho toda</label><select id="rs-dia" class="gt-select" onchange="rsCfgSalvar()">'+RS_DIAS.map(function(n,i){return'<option value="'+i+'"'+(i===c.dia?' selected':'')+'>'+n+'</option>'}).join('')+'</select> às <input type="time" id="rs-hora" value="'+c.hora+'" onchange="rsCfgSalvar()" style="width:auto"> <span>— com o sistema aberto, o Leomir gera e abre aqui; se estiver fechado, fica um aviso para a próxima vez que entrar.</span></div>'+
+    (r?'<div style="padding:0 16px 6px;font-size:11px;color:var(--text3)"><i class="ti ti-pencil"></i> Clique no texto para editar — salva sozinho. <span id="rs-salvo">'+(r.editadoEm?'Última edição: '+new Date(r.editadoEm).toLocaleString('pt-BR'):'')+'</span></div><div style="padding:0 16px 16px"><div id="rs-doc" contenteditable="true" oninput="rsEditou()" style="background:#fff;color:#1a0a0e;border:1px solid var(--border2);border-radius:var(--r);padding:22px;max-height:75vh;overflow:auto;font-family:Inter,Arial,sans-serif;outline:none">'+r.html+'</div></div>':
+      '<div class="empty" style="padding:24px"><i class="ti ti-file-off"></i>Nenhum relatório semanal ainda. Clique em <b>Gerar agora</b>.</div>')+'</div>';
+}
+function rsRedesenhar(){var el=document.getElementById('rs-card');if(el)el.outerHTML=rsCardHtml()}
+function rsEditou(){clearTimeout(rsTimer);rsTimer=setTimeout(function(){var el=document.getElementById('rs-doc'),r=rsPorData(rsAtual);if(!el||!r)return;r.html=el.innerHTML;r.editadoEm=new Date().toISOString();saveAll();var s=document.getElementById('rs-salvo');if(s)s.textContent='Salvo às '+new Date().toLocaleTimeString('pt-BR').slice(0,5)},1200)}
+function rsSalvarJa(){if(rsTimer){clearTimeout(rsTimer);rsTimer=null;var el=document.getElementById('rs-doc'),r=rsPorData(rsAtual);if(el&&r){r.html=el.innerHTML;r.editadoEm=new Date().toISOString();saveAll()}}}
+function rsCfgSalvar(){cfg.relSem={ativo:document.getElementById('rs-ativo').checked,dia:+document.getElementById('rs-dia').value,hora:document.getElementById('rs-hora').value||'15:00'};cfgSalvar('Horário do relatório semanal salvo.')}
+function rsJanela(){rsSalvarJa();var r=rsPorData(rsAtual);if(!r)return null;var w=window.open('','_blank');if(!w){alert('O navegador bloqueou a nova janela. Permita pop-ups para este sistema.');return null}
+  var t='Relatorio semanal '+fmt(r.semana);
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+esc(t)+'</title><style>'+relCssImpressao()+'@page{size:A4 landscape;margin:12mm}body{max-width:1100px}</style></head><body><div class="bt"><button onclick="window.print()">Imprimir / salvar PDF</button><button onclick="baixarWord()">Baixar Word</button></div><div id="doc">'+r.html+'</div></body></html>');
+  w.document.close();relJanelaWord(w,t);return w}
+function rsImprimir(){var w=rsJanela();if(w)setTimeout(function(){try{w.focus();w.print()}catch(e){}},400)}
+function rsWord(){var w=rsJanela();if(w)setTimeout(function(){try{w.baixarWord()}catch(e){}},300)}
+function rsModalAberto(){return!!document.querySelector('.overlay:not(.hidden)')}
+// verificação periódica: na hora marcada gera e abre; se o horário passou com o sistema fechado, gera e avisa
+function rsVerificar(){
+  try{
+    var au=document.getElementById('gt-auth');if(!au||!au.classList.contains('hidden')||!(cloudReady||!sb))return;
+    var c=rsCfg();if(!c.ativo)return;var u=rsUltimaData();if(rsPorData(u.data))return;
+    var r=rsGerar(u.data,false);
+    try{if(E2&&E2.func){var f=e2Func('sonia');if(f)e2Balao(f,'Relatório semanal pronto!',6)}}catch(e){}
+    var agoraMesmo=u.hoje&&rsAgoraSP().hm<rsSomarMin(c.hora,60);
+    if(agoraMesmo&&!rsModalAberto()){rsAbrir(r.semana);toast(e2NomeDe(E2_EQUIPE.filter(function(d){return d.id==='sonia'})[0])+' gerou o relatório semanal dos processos ativos. Pode editar aqui mesmo.','ok')}
+    else rsAvisar(r);
+  }catch(e){console.warn('relatório semanal',e)}
+}
+function rsSomarMin(hm,m){var p=hm.split(':'),t=(+p[0])*60+(+p[1])+m;if(t>=1440)return'23:59';return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')}
+function rsAvisar(r){if(_rsAvisado===r.id)return;_rsAvisado=r.id;
+  var tc=document.getElementById('toast-c');if(!tc)return;var d=document.createElement('div');d.className='toast ok';d.style.cursor='pointer';
+  d.innerHTML='<i class="ti ti-calendar-stats"></i> Relatório semanal (semana até '+fmt(r.semana)+') pronto — <b>clique para abrir e editar</b>';
+  d.onclick=function(){d.remove();rsAbrir(r.semana)};tc.appendChild(d);setTimeout(function(){if(d.parentNode)d.remove()},60000)}
+setTimeout(rsVerificar,9000);setInterval(rsVerificar,60000);
+
 // ===================== RELATÓRIO DO PROCESSO (editável, com registro do que aconteceu) =====================
 var relProcId=null;
 var AND_TIPOS=['Petição','Citação','Contestação','Réplica','Despacho','Decisão','Audiência','Perícia','Acordo','Sentença','Recurso','Acórdão','Trânsito em julgado','Cumprimento de sentença','Alvará / pagamento','Diligência','Reunião com o cliente','Atendimento','DataJud','Outro'];
@@ -6684,6 +6774,10 @@ var E2_TAREFAS=[
   {id:'jpconf',func:'clara',nome:'Julgados a conferir',pal:['conferir julgado','a conferir','conferir jurisprud'],rodar:function(){
     var l=jurisp.filter(function(j){return!j.conferido});if(!l.length)return e2R('Julgados a conferir','Todos conferidos!','Todos os julgados do banco já foram conferidos na fonte.');
     return e2R('Julgados a conferir',l.length+' julgado(s) a conferir.',e2Lista(l,function(j){return'<li>'+esc([siglaTrib(j.trib),jpIdent(j)].filter(Boolean).join(' · '))+(j.tema?' — '+esc(String(j.tema).slice(0,60)):'')+'</li>'}),[['Abrir Jurisprudência',function(){jpF.sit='pend';minutaSub='jp';switchTabById('minutas')}]]);
+  }},
+  {id:'relsem',func:'sonia',nome:'Relatório semanal',pal:['relatorio semanal','relatorio da semana','semanal','processos ativos'],dur:2,rodar:function(){
+    var u=rsUltimaData(),r=rsPorData(u.data)||rsGerar(u.data,false),n=procs.filter(function(p){return!_ENC[p.st]}).length;
+    return e2R('Relatório semanal',r.editadoEm?'O desta semana já está pronto (com suas edições).':'Relatório semanal pronto!','<div class="e2-kpis"><span>Semana até<b>'+fmt(r.semana)+'</b></span><span>Processos ativos<b>'+n+'</b></span></div>',[['Abrir para editar',function(){rsAbrir(r.semana)}],['Gerar de novo',function(){rsAbrir(rsGerar(u.data,true).semana)}]]);
   }},
   {id:'rel',func:'sonia',nome:'Relatório do mês',pal:['relatorio','gerencial','indicador','balanco'],dur:2,rodar:function(){
     var ym=todayStr.slice(0,7),ativos=procs.filter(function(p){return p.st!=='Arquivado'&&p.st!=='Concluído'}).length,novos=procs.filter(function(p){return String(p.ab||'').slice(0,7)===ym}).length;
