@@ -2096,7 +2096,7 @@ function djenAplicar(r){
 }
 function djenNovaIntim(r){
   var z=r.pzInfo||{};
-  return{id:uid(),procId:r.procId,cliId:r.cliId||'',numProc:r.numProc,teor:r.teor||'(sem texto — abra o inteiro teor)',data:r.data,dataPub:r.dataPub,pz:z.limite||'',pzAuto:!!z.limite,pzDias:z.dias||0,pzTipo:z.tipo||'',pzRegra:z.regra||'',resp:r.resp,portal:r.portal,orgao:r.orgao,tipoCom:r.tipoCom,link:r.link,partes:r.partes,djenId:r.djenId,st:'pendente',origem:'DJEN'};
+  return{id:uid(),procId:r.procId,cliId:r.cliId||'',numProc:r.numProc,teor:r.teor||'(sem texto — abra o inteiro teor)',sigilo:!!r.sigilo,data:r.data,dataPub:r.dataPub,pz:z.limite||'',pzAuto:!!z.limite,pzDias:z.dias||0,pzTipo:z.tipo||'',pzRegra:z.regra||'',resp:r.resp,portal:r.portal,orgao:r.orgao,tipoCom:r.tipoCom,link:r.link,partes:r.partes,djenId:r.djenId,st:'pendente',origem:'DJEN'};
 }
 function djenBuscar(){
   var oabs=djenParseOabs(document.getElementById('dj-oabs').value);
@@ -2162,6 +2162,8 @@ function djenStatusHtml(){
   linhas.push('<i class="ti ti-refresh"></i> Ao abrir o sistema: '+(djenAutoAtivo()?'ligado':'desligado')+(em?' · última '+fmtDt(em):'')+(err&&(!em||lsGet('gt_djen_auto_dia')!==todayStr)?' · <span style="color:#b91c1c">'+esc(err)+'</span>':''));
   return'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:12px"><div style="display:flex;flex-direction:column;gap:3px">'+linhas.join('<br>')+'</div><div style="display:flex;gap:6px"><button class="btn bo bs" onclick="djenAutoDiario(true)"><i class="ti ti-refresh"></i> Verificar agora</button><button class="btn bo bs" onclick="djenToggleAuto()">'+(djenAutoAtivo()?'Desligar automático':'Ligar automático')+'</button></div></div>';
 }
+// publicação de processo em segredo de justiça: o DJEN omite partes e conteúdo (fica só o nome dos advogados)
+function djenEhSigilo(teor,it){var t=normTxt(teor);return!t||t.length<25||/segredo de justica|sigilos|conteudo (omitido|restrito|indisponivel)|sob sigilo/.test(t)||!!(it&&(it.sigilo||it.segredoJustica||it.segredo_justica))}
 function djenMapear(it,oabs){
   var num=it.numeroprocessocommascara||it.numero_processo||'';
   var proc=procs.filter(function(p){return p.num&&soDigitos(p.num)===soDigitos(num)})[0];
@@ -2172,9 +2174,10 @@ function djenMapear(it,oabs){
   var cli=proc?cliDoProc(proc):cliPorPartes(partesL);
   var teorTxt=htmlParaTexto(it.texto),tipoCom=[it.tipoComunicacao,it.tipoDocumento].filter(Boolean).join(' · ');
   var pz=calcPrazoPublicacao(data,{teor:teorTxt,tipoCom:tipoCom,portal:it.siglaTribunal,orgao:it.nomeOrgao,num:num,cid:proc&&proc.cid});
+  var sigilo=djenEhSigilo(teorTxt,it);if(sigilo&&pz)pz.regra='CONTEÚDO OMITIDO NO DJEN (segredo de justiça): prazo PROVISÓRIO, só para não passar em branco — abra o ato no PJe/sistema do tribunal e corrija. '+pz.regra;
   return{
     djenId:String(it.id||it.hash),numProc:num,procId:proc?proc.id:'',cliId:cli?cli.id:'',cli:proc?proc.cli:(cli?cli.nome:''),
-    data:data,dataPub:pz?pz.dataPub:'',portal:it.siglaTribunal||'',orgao:it.nomeOrgao||'',
+    data:data,dataPub:pz?pz.dataPub:'',sigilo:sigilo,portal:it.siglaTribunal||'',orgao:it.nomeOrgao||'',
     tipoCom:tipoCom,link:it.link||'',pzInfo:pz,
     resp:meu?meu.nome:'',partes:partes,teor:teorTxt,
     jaImportada:intims.some(function(x){return x.djenId===String(it.id||it.hash)})
@@ -2224,7 +2227,7 @@ function renderIntimList(){
     return'<div class="card" style="margin-bottom:12px;border-left:4px solid '+(i.st==='pendente'?'#7c3aed':'#15803d')+'">'+
       '<div style="padding:14px 18px">'+
         '<div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:10px">'+
-          '<div><div style="font-weight:600;font-size:14px;color:var(--wine2);font-family:\'Cormorant Garamond\',serif">'+esc(p.cli||(cliPorId(i.cliId)||{}).nome||(i.numProc?'Processo não cadastrado':'Sem processo'))+(i.djenId?' <span class="badge" style="background:#eef2ff;color:#3730a3;font-family:Inter,sans-serif">DJEN</span>':'')+'</div><div style="font-size:11px;color:var(--text3);margin-top:2px">'+esc(p.num||i.numProc||'')+(p.area?' · '+p.area:'')+(i.orgao?' · '+esc(i.orgao):'')+'</div></div>'+
+          '<div><div style="font-weight:600;font-size:14px;color:var(--wine2);font-family:\'Cormorant Garamond\',serif">'+esc(p.cli||(cliPorId(i.cliId)||{}).nome||(i.numProc?'Processo não cadastrado':'Sem processo'))+(i.djenId?' <span class="badge" style="background:#eef2ff;color:#3730a3;font-family:Inter,sans-serif">DJEN</span>':'')+(i.sigilo||(i.djenId&&djenEhSigilo(i.teor==='(sem texto — abra o inteiro teor)'?'':i.teor))?' <span class="badge" style="background:#fef2f2;color:#b91c1c;font-family:Inter,sans-serif" title="O DJEN omite partes e conteúdo em processos sigilosos. Veja o ato no PJe/sistema do tribunal."><i class="ti ti-lock"></i> Segredo de justiça — ver no PJe</span>':'')+'</div><div style="font-size:11px;color:var(--text3);margin-top:2px">'+esc(p.num||i.numProc||'')+(p.area?' · '+p.area:'')+(i.orgao?' · '+esc(i.orgao):'')+'</div></div>'+
           '<div style="text-align:right"><span class="badge '+(i.st==='pendente'?'b-urgente':'b-concluido')+'">'+i.st+'</span><div style="margin-top:4px">'+(i.pz?prazolbl(i.pz):(i.st==='pendente'?'<span class="badge b-pend">Definir prazo</span>':''))+'</div></div>'+
         '</div>'+
         '<div style="font-size:13px;color:var(--text);padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:10px;line-height:1.6;white-space:pre-wrap">'+(i.teor&&i.teor.length>700&&!intimAberta[i.id]?esc(i.teor.slice(0,700))+'… <a href="#" onclick="intimAberta[\''+i.id+'\']=1;renderIntimList();return false">ver texto completo</a>':esc(i.teor))+'</div>'+
