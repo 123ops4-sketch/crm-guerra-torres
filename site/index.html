@@ -2210,19 +2210,21 @@ function djenImportar(){
   saveAll();djenRenderRes();renderIntimacoes();renderStats();
   toast(n+' intimação(ões) importada(s) do DJEN. Defina os prazos.','ok');
 }
+var _intimFiltro='';
 function renderIntimacoes(){
   var tc=document.getElementById('tab-content');
   tc.innerHTML='<div class="page-header"><div class="page-title"><div class="page-icon"><i class="ti ti-bell"></i></div><h2>Intimações</h2></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bg" onclick="openDjen()"><i class="ti ti-cloud-download"></i> Buscar no DJEN</button><button class="btn bp" onclick="openIntimModal()"><i class="ti ti-plus"></i> Nova intimação</button></div></div>'+
     djenStatusHtml()+'<div class="toolbar"><div class="gt-search"><i class="ti ti-search"></i><input id="isq" placeholder="Buscar intimação..." oninput="renderIntimList()"></div>'+
-    '<select class="gt-select" id="ifst" onchange="renderIntimList()"><option value="">Todas</option><option value="pendente">Pendentes</option><option value="cumprida">Cumpridas</option></select></div>'+
+    '<select class="gt-select" id="ifst" onchange="renderIntimList()"><option value="">Todas</option><option value="recentes"'+(_intimFiltro==='recentes'?' selected':'')+'>Recentes (últimos 7 dias)</option><option value="pendente"'+(_intimFiltro==='pendente'?' selected':'')+'>Pendentes</option><option value="cumprida"'+(_intimFiltro==='cumprida'?' selected':'')+'>Cumpridas</option></select></div>'+
     '<div id="intim-list"></div>';
   renderIntimList();
 }
 function renderIntimList(){
-  var q=(document.getElementById('isq').value||'').toLowerCase(),st=document.getElementById('ifst').value;
-  var data=intims.filter(function(i){var p=procs.filter(function(x){return x.id===i.procId})[0]||{};return(!q||[i.teor,p.cli,i.resp,i.numProc,i.partes,(cliPorId(i.cliId)||{}).nome].some(function(x){return(x||'').toLowerCase().indexOf(q)>-1}))&&(!st||i.st===st)}).sort(function(a,b){return(a.pz||'').localeCompare(b.pz||'')});
+  var q=(document.getElementById('isq').value||'').toLowerCase(),st=document.getElementById('ifst').value;_intimFiltro=st;
+  var rec=st==='recentes',desde=addDays(todayStr,-7);
+  var data=intims.filter(function(i){var p=procs.filter(function(x){return x.id===i.procId})[0]||{};return(!q||[i.teor,p.cli,i.resp,i.numProc,i.partes,(cliPorId(i.cliId)||{}).nome].some(function(x){return(x||'').toLowerCase().indexOf(q)>-1}))&&(!st||(rec?(i.data||'')>=desde:i.st===st))}).sort(rec?function(a,b){return(b.data||'').localeCompare(a.data||'')}:function(a,b){return(a.pz||'').localeCompare(b.pz||'')});
   var el=document.getElementById('intim-list');
-  if(!data.length){el.innerHTML='<div class="empty"><i class="ti ti-bell-off"></i>Nenhuma intimação</div>';return}
+  if(!data.length){el.innerHTML='<div class="empty"><i class="ti ti-bell-off"></i>'+(rec?'Nenhuma intimação nos últimos 7 dias':'Nenhuma intimação')+'</div>';return}
   el.innerHTML=data.map(function(i){var p=procs.filter(function(x){return x.id===i.procId})[0]||{};
     return'<div class="card" style="margin-bottom:12px;border-left:4px solid '+(i.st==='pendente'?'#7c3aed':'#15803d')+'">'+
       '<div style="padding:14px 18px">'+
