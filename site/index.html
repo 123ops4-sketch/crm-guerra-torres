@@ -5058,11 +5058,31 @@ function rsCardHtml(){
   return'<div class="card" id="rs-card" style="margin-bottom:16px"><div class="card-header" style="flex-wrap:wrap;gap:8px"><h3><i class="ti ti-calendar-stats"></i> Relatório semanal — processos ativos</h3><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
     (relSems.length?'<select class="gt-select" onchange="rsAtual=this.value;rsRedesenhar()">'+relSems.map(function(x){return'<option value="'+x.semana+'"'+(x.semana===rsAtual?' selected':'')+'>Semana até '+fmt(x.semana)+(x.editadoEm?' (editado)':'')+'</option>'}).join('')+'</select>':'')+
     '<button class="btn bo bs" onclick="rsAtual=rsGerar(null,true).semana;rsRedesenhar();toast(\'Relatório da semana gerado.\',\'ok\')"><i class="ti ti-refresh"></i> '+(rsPorData(rsUltimaData().data)?'Gerar de novo':'Gerar agora')+'</button>'+
+    (r?'<select class="gt-select" onchange="rsCliente(this.value);this.value=\'\'" title="Gera um resumo separado só com os processos desse cliente, em linguagem para o cliente"><option value="">Versão para um cliente…</option>'+rsClientesDaSemana().map(function(x,i){return'<option value="'+i+'">'+esc(x.nome)+'</option>'}).join('')+'</select>':'')+
     (r?'<button class="btn bo bs" onclick="rsImprimir()"><i class="ti ti-printer"></i> Imprimir / PDF</button><button class="btn bo bs" onclick="rsWord()"><i class="ti ti-file-word"></i> Word</button>':'')+
     '</div></div><div style="padding:8px 16px;font-size:12px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap;align-items:center"><label style="display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto"'+(c.ativo?' checked':'')+' onchange="rsCfgSalvar()" id="rs-ativo"> Gerar sozinho toda</label><select id="rs-dia" class="gt-select" onchange="rsCfgSalvar()">'+RS_DIAS.map(function(n,i){return'<option value="'+i+'"'+(i===c.dia?' selected':'')+'>'+n+'</option>'}).join('')+'</select> às <input type="time" id="rs-hora" value="'+c.hora+'" onchange="rsCfgSalvar()" style="width:auto"> <span>— com o sistema aberto, o Leomir gera e abre aqui; se estiver fechado, fica um aviso para a próxima vez que entrar.</span></div>'+
     (r?'<div style="padding:0 16px 6px;font-size:11px;color:var(--text3)"><i class="ti ti-pencil"></i> Clique no texto para editar — salva sozinho. <span id="rs-salvo">'+(r.editadoEm?'Última edição: '+new Date(r.editadoEm).toLocaleString('pt-BR'):'')+'</span></div><div style="padding:0 16px 16px"><div id="rs-doc" contenteditable="true" oninput="rsEditou()" style="background:#fff;color:#1a0a0e;border:1px solid var(--border2);border-radius:var(--r);padding:22px;max-height:75vh;overflow:auto;font-family:Inter,Arial,sans-serif;outline:none">'+r.html+'</div></div>':
       '<div class="empty" style="padding:24px"><i class="ti ti-file-off"></i>Nenhum relatório semanal ainda. Clique em <b>Gerar agora</b>.</div>')+'</div>';
 }
+function rsClientesDaSemana(){var vist={},l=[];procs.filter(function(p){return!_ENC[p.st]}).forEach(function(p){var c=cliDoProc(p);var k=c?c.id:'n:'+p.cli;if(!vist[k]){vist[k]=1;l.push({id:c?c.id:'',nome:c?c.nome:p.cli,cli:p.cli})}});return l.sort(function(a,b){return String(a.nome).localeCompare(String(b.nome))})}
+function rsClienteTexto(nome,cliId,ate){
+  ate=ate||rsAtual||rsUltimaData().data;var ini=addDays(ate,-6),e=escritorio(),c=cliPorId(cliId)||cliPorNome(nome)||{nome:nome};
+  var ps=procs.filter(function(p){if(_ENC[p.st])return false;var pc=cliDoProc(p);return c.id?(pc&&pc.id===c.id):p.cli===nome});
+  var situ={Ativo:'em andamento',Aguardando:'aguardando manifestação ou decisão','Em andamento':'em andamento',Urgente:'em andamento, com providência sendo tomada pelo escritório'};
+  var t='Olá, '+primeiroNome(c.nome||nome)+'!\n\nSegue o resumo semanal '+(ps.length>1?'dos seus processos':'do seu processo')+' (semana de '+fmt(ini)+' a '+fmt(ate)+').\n';
+  ps.forEach(function(p){
+    var an=ands.filter(function(a){return a.procId===p.id&&a.data>=ini&&a.data<=ate}).sort(function(a,b){return a.data.localeCompare(b.data)});
+    var aud=prazos.filter(function(z){return z.procId===p.id&&!z.cumprido&&z.tipo==='audiencia'&&z.limite>ate&&z.limite<=addDays(ate,45)}).sort(function(a,b){return a.limite.localeCompare(b.limite)});
+    t+='\nPROCESSO: '+(p.num||'—')+'\n'+(p.tipoAcao||p.djClasse?'AÇÃO: '+(p.tipoAcao||p.djClasse)+'\n':(p.area?'ÁREA: '+p.area+'\n':''))+'SITUAÇÃO: '+(situ[p.st]||'em andamento')+'\n';
+    t+='NESTA SEMANA:\n'+(an.length?an.map(function(a){return'• '+fmt(a.data)+' — '+a.desc}).join('\n'):'• Não houve movimentação nesta semana. Seguimos acompanhando.')+'\n';
+    if(aud.length)t+='PRÓXIMAS DATAS:\n'+aud.map(function(z){return'• '+fmt(z.limite)+(z.hora?' às '+z.hora:'')+' — '+z.desc}).join('\n')+'\nEntraremos em contato com as orientações.\n';
+  });
+  var docs=c.id?docsPendentes.filter(function(d){return d.cliId===c.id&&d.status==='pendente'}):[];
+  if(docs.length)t+='\nDOCUMENTOS QUE AINDA PRECISAMOS RECEBER:\n'+docs.map(function(d){return'• '+d.nome}).join('\n')+'\n';
+  t+='\nQualquer dúvida, estamos à disposição.\n\n'+e.nome+'\n'+e.advogado+' — '+e.oab+(e.telefone?'\n'+e.telefone:'');
+  return t;
+}
+function rsCliente(v){if(!v)return;var l=rsClientesDaSemana(),i=+v,x=l[i];if(!x)return;var c=cliPorId(x.id)||{};docJanela('Resumo semanal — '+x.nome,rsClienteTexto(x.nome,x.id),{whats:c.tel})}
 function rsRedesenhar(){var el=document.getElementById('rs-card');if(el)el.outerHTML=rsCardHtml()}
 function rsEditou(){clearTimeout(rsTimer);rsTimer=setTimeout(function(){var el=document.getElementById('rs-doc'),r=rsPorData(rsAtual);if(!el||!r)return;r.html=el.innerHTML;r.editadoEm=new Date().toISOString();saveAll();var s=document.getElementById('rs-salvo');if(s)s.textContent='Salvo às '+new Date().toLocaleTimeString('pt-BR').slice(0,5)},1200)}
 function rsSalvarJa(){if(rsTimer){clearTimeout(rsTimer);rsTimer=null;var el=document.getElementById('rs-doc'),r=rsPorData(rsAtual);if(el&&r){r.html=el.innerHTML;r.editadoEm=new Date().toISOString();saveAll()}}}
