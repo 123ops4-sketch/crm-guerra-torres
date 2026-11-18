@@ -2049,31 +2049,53 @@ function djenRequisicao(params){
   }
   if(djenModo==='nuvem')return viaNuvem();
   return fetch(DJEN_URL+'?'+qs,{headers:{Accept:'application/json'}}).then(function(res){
-    if(res.status===429)throw new Error('O DJEN limitou o número de consultas. Aguarde um minuto e tente de novo.');
-    if(!res.ok)throw new Error('O DJEN respondeu com erro '+res.status+'.');
+    var er;
+    if(res.status===429){er=new Error('O DJEN limitou o número de consultas. Aguarde um minuto e tente de novo.');er.status=429;throw er}
+    if(!res.ok){er=new Error('O DJEN respondeu com erro '+res.status+'.');er.status=res.status;throw er}
     return res.json();
   },function(){djenModo='nuvem';return viaNuvem()});
 }
 function djenEspera(ms){return new Promise(function(r){setTimeout(r,ms)})}
+// o DJEN (servidor do CNJ) às vezes responde 500/502/503 por instabilidade: tenta de novo com espera e,
+// se continuar, pede páginas menores; uma OAB com falha não impede a consulta das outras
+function djenErroServidor(e){return e&&(e.status===429||e.status>=500)}
+function djenPagina(params,onStatus){
+  var tamanhos=[100,100,100,50,50],i=0;
+  function tenta(){
+    var p={};for(var k in params)p[k]=params[k];p.itensPorPagina=tamanhos[i];
+    return djenRequisicao(p).then(function(js){return{js:js,tam:p.itensPorPagina}},function(e){
+      if(!djenErroServidor(e)||i>=tamanhos.length-1)throw e;
+      i++;var espera=[0,2000,5000,4000,8000][i]||5000;
+      if(onStatus)onStatus('O DJEN está instável (erro '+e.status+'). Tentando de novo ('+(i+1)+'/'+tamanhos.length+')…');
+      return djenEspera(espera).then(tenta);
+    });
+  }
+  return tenta();
+}
 function djenColetar(oabs,ini,fim,onStatus){
-  var achados={},cadeia=Promise.resolve();
+  var achados={},falhas=[],cadeia=Promise.resolve();
   oabs.forEach(function(o){
     var pag=1;
     function pagina(){
       if(onStatus)onStatus('Consultando OAB '+o.n+'/'+o.uf+' (página '+pag+')…');
-      return djenRequisicao({numeroOab:o.n,ufOab:o.uf,dataDisponibilizacaoInicio:ini,dataDisponibilizacaoFim:fim,itensPorPagina:100,pagina:pag}).then(function(js){
-        var itens=(js&&js.items)||[];
+      return djenPagina({numeroOab:o.n,ufOab:o.uf,dataDisponibilizacaoInicio:ini,dataDisponibilizacaoFim:fim,pagina:pag},onStatus).then(function(r){
+        var itens=(r.js&&r.js.items)||[];
         itens.forEach(function(it){var k=it.id||it.hash;if(k&&!achados[k])achados[k]=it});
-        if(itens.length===100&&pag<20){pag++;return djenEspera(600).then(pagina)}
+        if(itens.length===r.tam&&pag<40){pag++;return djenEspera(600).then(pagina)}
       });
     }
-    cadeia=cadeia.then(pagina).then(function(){return djenEspera(600)});
+    cadeia=cadeia.then(pagina).catch(function(e){falhas.push({oab:o.n+'/'+o.uf,msg:e&&e.message||String(e),status:e&&e.status})}).then(function(){return djenEspera(600)});
   });
   return cadeia.then(function(){
+    if(falhas.length===oabs.length){var e=new Error(djenMsgFalha(falhas));e.falhas=falhas;throw e}
     var res=Object.keys(achados).map(function(k){return djenMapear(achados[k],oabs)});
     res.sort(function(a,b){return(b.data||'').localeCompare(a.data||'')});
-    return res;
+    res.falhas=falhas;return res;
   });
+}
+function djenMsgFalha(falhas){
+  var srv=falhas.some(function(f){return djenErroServidor(f)});
+  return(srv?'O DJEN (sistema do CNJ) está fora do ar ou instável — respondeu com erro '+falhas[0].status+' mesmo após 5 tentativas. Não é falha do CRM: a verificação será repetida sozinha a cada hora, e nada se perde (a próxima consulta cobre os dias que faltaram).':falhas[0].msg)+' OAB(s) sem consulta: '+falhas.map(function(f){return f.oab}).join(', ')+'.';
 }
 function djenGarantirProcesso(r){
   if(r.procId)return r.procId;
@@ -2107,7 +2129,8 @@ function djenBuscar(){
   lsSet('gt_djen_oabs',document.getElementById('dj-oabs').value);
   btn.disabled=true;st.textContent='Consultando o DJEN…';
   djenColetar(oabs,ini,fim,function(t){st.textContent=t}).then(function(res){
-    btn.disabled=false;djenResultados=res;lsSet('gt_djen_ultima',fim);djenRenderRes();
+    btn.disabled=false;djenResultados=res;if(!(res.falhas&&res.falhas.length))lsSet('gt_djen_ultima',fim);djenRenderRes();
+    if(res.falhas&&res.falhas.length)st.textContent+=' · ATENÇÃO: '+djenMsgFalha(res.falhas);
   }).catch(function(e){btn.disabled=false;st.textContent='';document.getElementById('dj-res').innerHTML='<div style="padding:12px;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;border-radius:8px;font-size:13px">'+esc(e.message)+'</div>'});
 }
 function djenCompletar(){
@@ -2144,7 +2167,9 @@ function djenAutoDiario(forcar){
     djenAutoRodando=false;
     var novas=res.filter(function(r){return!intims.some(function(x){return x.djenId===r.djenId})});
     novas.forEach(function(r){djenAplicar(r)});
-    lsSet('gt_djen_auto_dia',todayStr);lsSet('gt_djen_ultima',todayStr);lsSet('gt_djen_auto_em',new Date().toISOString());
+    if(res.falhas&&res.falhas.length){lsSet('gt_djen_auto_erro',djenMsgFalha(res.falhas));if(forcar)toast('DJEN: '+esc(djenMsgFalha(res.falhas)),'danger')}
+    else{lsSet('gt_djen_auto_dia',todayStr);lsSet('gt_djen_ultima',todayStr);lsSet('gt_djen_auto_erro','')}
+    lsSet('gt_djen_auto_em',new Date().toISOString());
     if(novas.length){saveAll();render();toast(novas.length+' nova(s) publicação(ões) do DJEN importada(s). Defina os prazos.','ok')}
     else if(forcar)toast('Nenhuma publicação nova no DJEN.','ok');
     if(currentTab==='intimacoes')renderIntimacoes();
