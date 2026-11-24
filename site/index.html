@@ -467,7 +467,7 @@ body.com-crono{padding-bottom:76px}
 .e2-prog{width:28px;height:4px;background:#1f2937;border:1px solid #fff}.e2-prog i{display:block;height:100%;width:0;background:#22c55e}
 .e2-sala{position:absolute;font-family:'Press Start 2P',ui-monospace,monospace;font-size:7px;color:#fff;text-shadow:1px 1px 0 #000;pointer-events:none;line-height:1}
 .e2-voce{position:absolute;transform:translate(-50%,0);font-family:'Press Start 2P',ui-monospace,monospace;font-size:6px;color:#fde68a;background:#3d0b15;padding:2px 3px}
-.e2-advtag{display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:none;white-space:nowrap;z-index:2}.e2-advtag small{color:#f5e9d4;font-family:Inter,Arial,sans-serif;font-size:8px;letter-spacing:0}.e2-advtag .e2-bal{font-size:7px}.e2-advtag-anda small{display:none}
+.e2-advtag{display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:none;white-space:nowrap;z-index:2}.e2-advtag small{color:#f5e9d4;font-family:Inter,Arial,sans-serif;font-size:8px;letter-spacing:0}.e2-advtag .e2-bal{font-size:7px;white-space:normal;width:max-content;max-width:120px}.e2-advtag-anda small{display:none}
 .e2-adv-dados{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;padding:6px 2px 8px;font-size:12px}.e2-adv-dados b{color:var(--wine2)}
 .e2-menu{position:absolute;z-index:3;background:var(--white);border:2px solid #3d0b15;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:5px;min-width:200px;line-height:1.3;box-shadow:4px 4px 0 rgba(0,0,0,.2)}
 .e2-menu-h{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:2px}.e2-menu-h i{margin-left:auto;cursor:pointer;color:var(--text3)}.e2-menu button{text-align:left;border-radius:6px}
@@ -7411,15 +7411,17 @@ function e2Passo(dt,instant){
     if((f.estado==='parado'||f.estado==='lazer')&&f.fila.length){if(f.estado==='lazer')e2Balao(f,'Opa, trabalho!',1.5);e2SairLazer(f);e2Iniciar(f);e2Equipe();return}
     if(f.fora)return;
     var per=instant?'trabalho':e2Expediente();
-    if(f.estado==='lazer'){if(per==='trabalho'){e2VoltarMesa(f,'De volta ao trabalho!');e2Equipe();return}if(per==='fora'){e2IrEmbora(f);e2Equipe();return}e2Lazer(f);return}
+    if(f.estado==='lazer'){if(per==='trabalho'){e2VoltarMesa(f,e2Sorteia(E2_VOLTA));e2Equipe();return}if(per==='fora'){e2IrEmbora(f);e2Equipe();return}e2Lazer(f);return}
     if(f.estado==='parado'&&!instant&&!f.fila.length){
       if(per==='fora'){f.ocioso=(f.ocioso||0)+dt;if(!f.limSaida)f.limSaida=1+Math.random()*8;if(f.ocioso>=f.limSaida){f.limSaida=0;f.ocioso=0;e2IrEmbora(f);e2Equipe()}return}
-      if(per==='almoco'||per==='lanche'){f.ocioso=(f.ocioso||0)+dt;if(!f.limOcio)f.limOcio=1+Math.random()*10;if(f.ocioso>=f.limOcio){f.limOcio=0;e2IrLazer(f);if(Math.random()<0.7)e2Balao(f,per==='almoco'?'Hora do almoço!':'Hora do lanche!',2);e2Equipe();return}}
+      if(per==='almoco'||per==='lanche'){f.ocioso=(f.ocioso||0)+dt;if(!f.limOcio)f.limOcio=1+Math.random()*10;if(f.ocioso>=f.limOcio){f.limOcio=0;e2IrLazer(f);if(Math.random()<0.7)e2Balao(f,e2Sorteia(E2_ALMOCO[per]),2);e2Equipe();return}}
       else{f.ocioso=0;if(!f.sentado&&!f.caminho.length){var mm=E2_PONTOS[f.sala].mesa;if(Math.abs(f.x-mm.x)+Math.abs(f.y-mm.y)>2){e2VoltarMesa(f);return}f.sentado=true}}
     }
+    if(f.estado==='parado'&&f.sentado&&!instant&&per==='trabalho'&&E2_MESA_FALAS[f.sala]&&Math.random()<dt*0.012)e2Balao(f,e2Sorteia(E2_MESA_FALAS[f.sala]),2.4);
     if(f.estado==='parado'&&!instant&&Math.random()<dt*0.02&&!f.sentado){var m=E2_PONTOS[f.sala].mesa;e2Ir(f,[{x:m.x,y:f.y},m],function(){f.sentado=true})}
   });
   e2AdvPasso(dt,instant);
+  if(!instant)e2AdvHora();
   if(!instant)e2PetsPasso(dt);
   if(Math.floor(E2.t*4)!==Math.floor((E2.t-dt)*4))e2Equipe();
 }
@@ -7432,7 +7434,26 @@ var E2_LAZER=[
   {id:'c1',x:494,y:58,act:'cafe',dir:1},{id:'c2',x:518,y:58,act:'cafe',dir:-1},
   {id:'f5',x:494,y:182,act:'fofoca',dir:1},{id:'f6',x:518,y:182,act:'fofoca',dir:-1}
 ];
-var E2_FALAS={cafe:['Café fresquinho!','Quer um?','Sem açúcar, por favor.','Esse pão de queijo…','Só mais um cafezinho.','Hoje tá puxado!'],jogo:['GG!','Mais uma!','Passa o controle!','Essa fase é difícil…','Ganhei!','Revanche!'],ping:['Toma!','Ponto meu!','Saque!','Essa foi na rede!','Defende essa!'],fofoca:['Você soube…?','Não acredito!','Fala baixo!','kkkkk','Conta tudo!','Nem te conto…','Sério?!','E o café, hein?']};
+var E2_FALAS={
+ cafe:['Café fresquinho!','Quer um?','Sem açúcar, por favor.','Esse pão de queijo…','Só mais um cafezinho.','Hoje tá puxado!','Café passado agora!','Quem fez esse café? Tá ótimo!','Pega uma xícara pra mim?','Cafezinho e volto!','Esse bolo é de quem?','Acabou o açúcar de novo…','Um expresso, por favor!','Hoje é dia de café duplo.','Sem café não tem petição!'],
+ jogo:['GG!','Mais uma!','Passa o controle!','Essa fase é difícil…','Ganhei!','Revanche!','Quase!','Tá roubando, hein?','Pausa! Pausa!','Mais uma partida e volto.','Eu sou o campeão da copa!','Esse chefão é impossível!','Combo!','Deixa eu jogar agora!','Foi sorte…'],
+ ping:['Toma!','Ponto meu!','Saque!','Essa foi na rede!','Defende essa!','Na quina!','Saque cortado!','11 a 9!','Melhor de três?','Bola fora!','Essa foi bonita!','Tá aquecendo…','Revanche amanhã!'],
+ fofoca:['Você soube…?','Não acredito!','Fala baixo!','kkkkk','Conta tudo!','Nem te conto…','Sério?!','E o café, hein?','Viu o jogo ontem?','Que calor hoje!','Fim de semana vem aí!','Alguém viu meu carregador?','Hoje tem bolo?','Vai chover, olha o céu…','Que semana corrida!','Sabia que o fórum mudou de horário?','Me lembra de ligar pro cliente depois.','Que série você tá vendo?','Bora marcar um churrasco?','Ganhou no bolão?']};
+var E2_IR_COPA={jogo:['Bora jogar!','Uma partidinha rápida!','Quem encara?'],ping:['Quem topa um ping?','Desafio no pingue-pongue!','Bora um ping?'],fofoca:['Tenho uma fofoca…','Vem cá, preciso te contar!','Pausa pra conversar!'],cafe:['Vou pegar um café.','Hora do cafezinho!','Café, alguém?']};
+var E2_TCHAU=['Até amanhã!','Tchau, pessoal!','Fui!','Bom descanso, equipe!','Até mais!','Fui, gente! Até amanhã!','Tchau! Não esqueçam o backup!'];
+var E2_VOLTA=['De volta ao trabalho!','Bora, que o prazo não espera!','Voltando pra mesa!','Pausa encerrada!','Partiu trabalho!'];
+var E2_ALMOCO={almoco:['Hora do almoço!','Bora almoçar!','Fome!','Quem vai no restaurante?','Marmita hoje!'],lanche:['Hora do lanche!','Pausa pro lanche!','Bora comer alguma coisa?','Lanchinho!']};
+// falas na mesa, de vez em quando, durante o expediente (uma por setor)
+var E2_MESA_FALAS={
+ recep:['Guerra & Torres, bom dia!','Já vou anotar o recado.','Pode aguardar um minutinho?','Cliente chegando!','Agenda do dia conferida.','Documento recebido!'],
+ intim:['Conferindo o DJEN…','Nada novo por enquanto.','Mais uma intimação lida.','Prazo anotado!','Olho no Diário!','Tudo em dia por aqui.'],
+ agenda:['Agenda atualizada!','Audiência confirmada.','Prazos da semana em dia.','Conferindo os feriados…','Lembrete enviado!','Nenhum prazo vencendo hoje.'],
+ fin:['Recibo emitido!','Parcela conferida.','Caixa batendo certinho.','Honorário recebido!','Lançando as despesas…','Planilha em dia.'],
+ arq:['Pasta organizada!','Processo atualizado.','Arquivando os documentos…','Digitalizando…','Tudo no lugar!','Achei a pasta!'],
+ biblio:['Separando jurisprudência…','Esse julgado é bom!','Modelo atualizado.','Pesquisando precedentes…','Súmula conferida.','Biblioteca organizada!'],
+ dir:['Relatório quase pronto!','Números da semana conferidos.','Reunião às 16h?','Metas no caminho!','Indicadores atualizados.','Backup em dia!']};
+var E2_ADV_HORA=['Boa, timeee!','Boa, time! Mais uma hora vencida!','Bora, equipe! Tá rendendo!','Orgulho dessa equipe!','Valeu, pessoal! Seguimos firmes!','Prazo em dia é tranquilidade. Boa, time!','Força, time! Cliente bem atendido!','Mais uma hora, mais um passo!','Excelente trabalho, pessoal!','Time afinado é outra coisa!','Boa, galera! Foco total!','Isso aí, equipe! Rumo ao fim do dia!'];
+var E2_RESP_HORA=['Valeu, {t}!','Boa, {t}!','Tamo junto, {t}!','Bora!','Obrigado(a), {t}!'];
 var E2_ATV={jogo:'jogando videogame',ping:'jogando pingue-pongue',fofoca:'fofocando',cafe:'tomando café'};
 function e2LazerLivre(){var oc={};E2.func.concat(E2.advs||[]).forEach(function(f){if(f.spot)oc[f.spot.id]=1});return E2_LAZER.filter(function(sp){return!oc[sp.id]})}
 function e2EscolherLazer(f){
@@ -7444,7 +7465,7 @@ function e2EscolherLazer(f){
 function e2IrLazer(f){
   var sp=e2EscolherLazer(f);if(!sp){f.ocioso=0;return}
   f.spot=sp;f.estado='pausa';f.sentado=false;f.ocioso=0;
-  if(Math.random()<0.5)e2Balao(f,{jogo:'Bora jogar!',ping:'Quem topa um ping?',fofoca:'Tenho uma fofoca…'}[sp.act],2);
+  if(Math.random()<0.6)e2Balao(f,e2Sorteia(E2_IR_COPA[sp.act]),2);
   e2Ir(f,e2Rota(f,{x:sp.x,y:sp.y},e2Sala('copa')),function(){f.estado='lazer';f.dir=sp.dir||(sp.x>432?-1:1);f.lazerAte=E2.t+25+Math.random()*25;f.falaEm=E2.t+1.5+Math.random()*3});
 }
 function e2SairLazer(f){f.spot=null;f.lazerAte=0}
@@ -7461,9 +7482,9 @@ function e2AdvsInit(){var base=e2Advogados(),eq=equipeLista();
   if(E2.advs&&E2.advs.length===base.length&&E2.advs.every(function(a,i){return a.rot===base[i].rot}))return E2.advs;
   E2.advs=base.map(function(a,i){return Object.assign({},a,{id:'adv'+i,nomeCompleto:eq[i]||a.rot,hx:a.x,hy:a.y,caminho:[],estado:'mesa',ft:0,frame:0,balao:null,fila:[],spot:null,sentado:true,fora:false,ocioso:0,lim:0,lazerAte:0,falaEm:0})});
   return E2.advs}
-function e2AdvVoltar(a,txt){e2SairLazer(a);a.estado='voltando';if(txt)e2Balao(a,txt,2);e2Ir(a,e2Rota(a,{x:a.hx,y:a.hy},e2Sala('advs')),function(){a.estado='mesa';a.sentado=true;a.dir=a.id==='adv0'?1:-1})}
+function e2AdvVoltar(a,txt){e2SairLazer(a);a.estado='voltando';a.semCafeAte=E2.t+120;if(txt)e2Balao(a,txt,2);e2Ir(a,e2Rota(a,{x:a.hx,y:a.hy},e2Sala('advs')),function(){a.estado='mesa';a.sentado=true;a.dir=a.id==='adv0'?1:-1})}
 function e2AdvCopa(a,motivo){var liv=e2LazerLivre(),pref=liv.filter(function(sp){return motivo==='cafe'?sp.act==='cafe':(sp.act==='cafe'||sp.act==='fofoca')});var sp=(pref.length?pref:liv)[Math.floor(Math.random()*(pref.length||liv.length))];if(!sp)return;
-  a.spot=sp;a.estado='pausa';a.sentado=false;a.ocioso=0;e2Balao(a,motivo==='cafe'?'Vou pegar um café.':motivo==='almoco'?'Hora do almoço!':'Hora do lanche!',2);
+  a.spot=sp;a.estado='pausa';a.sentado=false;a.ocioso=0;e2Balao(a,motivo==='cafe'?e2Sorteia(E2_IR_COPA.cafe):e2Sorteia(E2_ALMOCO[motivo]),2);
   e2Ir(a,e2Rota(a,{x:sp.x,y:sp.y},e2Sala('copa')),function(){a.estado='lazer';a.dir=sp.dir||(sp.x>432?-1:1);a.lazerAte=E2.t+(motivo==='cafe'?14+Math.random()*12:30+Math.random()*30);a.falaEm=E2.t+1.5+Math.random()*3;a.motivo=motivo})}
 function e2AdvPasso(dt,instant){
   if(!E2.advs)return;
@@ -7481,13 +7502,23 @@ function e2AdvPasso(dt,instant){
     if(a.estado==='lazer'){
       if(per==='fora'){a.estado='saindo';e2SairLazer(a);e2Balao(a,'Até amanhã, pessoal!',2);e2Ir(a,e2Rota(a,E2_SAIDA,null),function(){a.fora=true;a.estado='mesa'});return}
       if(E2.t>=a.falaEm){var fs=E2_FALAS[a.spot.act];e2Balao(a,fs[Math.floor(Math.random()*fs.length)],2.2);a.falaEm=E2.t+5+Math.random()*7}
-      if((per==='trabalho'&&(a.motivo!=='cafe'||E2.t>=a.lazerAte))||(per!=='trabalho'&&E2.t>=a.lazerAte&&Math.random()<dt*0.2))e2AdvVoltar(a,'De volta aos processos!');
+      if((per==='trabalho'&&(a.motivo!=='cafe'||E2.t>=a.lazerAte))||(per!=='trabalho'&&E2.t>=a.lazerAte&&Math.random()<dt*0.2))e2AdvVoltar(a,e2Sorteia(['De volta aos processos!','Bora, que tem petição esperando!','Voltando pra mesa.','Pausa encerrada!']));
       return}
     if(a.estado!=='mesa')return;
     if(per==='fora'){a.ocioso+=dt;if(!a.lim)a.lim=2+Math.random()*10;if(a.ocioso>=a.lim){a.lim=0;a.ocioso=0;a.estado='saindo';a.sentado=false;e2Balao(a,'Até amanhã!',2);e2Ir(a,e2Rota(a,E2_SAIDA,null),function(){a.fora=true;a.estado='mesa'})}return}
     if(per==='almoco'||per==='lanche'){a.ocioso+=dt;if(!a.lim)a.lim=3+Math.random()*14;if(a.ocioso>=a.lim){a.lim=0;e2AdvCopa(a,per)}return}
-    a.ocioso=0;if(Math.random()<dt*0.003)e2AdvCopa(a,'cafe');
+    a.ocioso=0;if(E2.t>(a.semCafeAte||0)&&Math.random()<dt*0.003)e2AdvCopa(a,'cafe');
   });
+}
+function e2Sorteia(l){return l[Math.floor(Math.random()*l.length)]}
+// a cada hora cheia do expediente, os advogados animam o time e alguém responde
+function e2AdvHora(){
+  var d=e2Agora(),h=d.getHours(),chave=d.toDateString()+'-'+h;if(E2.horaUlt===undefined){E2.horaUlt=chave;return}
+  if(E2.horaUlt===chave)return;E2.horaUlt=chave;if(e2Expediente()!=='trabalho'||d.getMinutes()>5)return;
+  var advs=(E2.advs||[]).filter(function(a){return!a.fora});if(!advs.length)return;
+  var a=advs[Math.floor(Math.random()*advs.length)];e2Balao(a,e2Sorteia(E2_ADV_HORA),4);
+  var outro=advs.filter(function(x){return x!==a})[0];if(outro)setTimeout(function(){e2Balao(outro,e2Sorteia(['Isso aí!','Boa, timeee!','Concordo! Vamos com tudo!','Equipe nota 10!']),3)},1800);
+  var eq=(E2.func||[]).filter(function(f){return!f.fora});if(eq.length)setTimeout(function(){var f=e2Sorteia(eq);e2Balao(f,e2Sorteia(E2_RESP_HORA).replace('{t}',a.rot),2.5)},3200);
 }
 function e2SemanaIni(){var d=new Date(todayStr+'T12:00:00').getDay();return addDays(todayStr,-((d+6)%7))}
 function e2AdvDados(a){
@@ -7528,7 +7559,7 @@ function e2PetsPasso(dt){
     else{pt.estado='indo';pt.alvo=pt.cama;pt.aoChegar=function(){pt.estado='dormindo';pt.ate=E2.t+8+Math.random()*10}}
   });
 }
-function e2PetFala(pt,txt){var l=E2_PET_FALA[pt.tipo];pt.balao={txt:txt||l[Math.floor(Math.random()*l.length)],ate:E2.t+2}}
+function e2PetFala(pt,txt){/* os bichos não falam: só corações no carinho */}
 function e2PetCarinho(pt,f){
   pt.estado='carinho';pt.ate=E2.t+3.5;pt.coracao=E2.t+3;e2PetFala(pt);pt.alvo=null;
   if(f){f.dir=pt.x>f.x?1:-1;e2Balao(f,E2_CARINHO[Math.floor(Math.random()*E2_CARINHO.length)].replace('{n}',pt.nome),2.4)}
@@ -7589,7 +7620,7 @@ function e2Expediente(){
 }
 var E2_PER_TXT={trabalho:'Expediente',almoco:'Horário de almoço',lanche:'Hora do lanche',fora:'Fora do expediente'};
 var E2_SAIDA={x:6,y:112};
-function e2IrEmbora(f){f.estado='saindo';f.sentado=false;e2SairLazer(f);e2Balao(f,['Até amanhã!','Tchau, pessoal!','Fui!'][Math.floor(Math.random()*3)],2);
+function e2IrEmbora(f){f.estado='saindo';f.sentado=false;e2SairLazer(f);e2Balao(f,e2Sorteia(E2_TCHAU),2);
   e2Ir(f,e2Rota(f,E2_SAIDA,null),function(){f.fora=true;f.estado='parado'})}
 function e2VoltarMesa(f,txt){var m=E2_PONTOS[f.sala].mesa;e2SairLazer(f);f.estado='voltando';if(txt)e2Balao(f,txt,2);e2Ir(f,e2Rota(f,m,e2Sala(f.sala)),function(){f.estado='parado';f.sentado=true;f.dir=1})}
 function e2ExpModal(){var h=e2Hor();['ini','fim','almIni','almFim','lanIni','lanFim'].forEach(function(k){document.getElementById('e2h-'+k).value=h[k]});document.getElementById('e2h-fds').checked=!!h.fimSemana;openModal('mE2Hor')}
@@ -7652,14 +7683,15 @@ function renderEscritorio2D(){
   if(E2.ctx){E2.ctx.imageSmoothingEnabled=false}
   document.getElementById('e2-ov').innerHTML=E2.func.map(function(f){return'<div class="e2-tag" id="e2-tag-'+f.id+'"><span class="e2-nome">'+esc(f.nome)+'</span><span class="e2-bal hidden"></span><span class="e2-prog hidden"><i></i></span></div>'}).join('')+
     (e2PetsInit(),E2.pets.map(function(pt){return'<div class="e2-tag e2-pet" id="e2-pet-'+pt.id+'"><span class="e2-bal hidden"></span><span class="e2-nome">'+esc(pt.nome)+'</span></div>'}).join(''))+
-    E2_SALAS.map(function(s){return'<div class="e2-sala" style="left:'+((s.x+4)/E2_W*100)+'%;top:'+((s.cima?s.y+4:s.y+8)/E2_H*100)+'%">'+esc(s.nome)+'</div>'}).join('')+e2AdvsInit().map(function(a){return'<div class="e2-voce e2-advtag" id="e2-'+a.id+'" style="left:'+(a.x/E2_W*100)+'%;top:'+((a.y-25)/E2_H*100)+'%"><span class="e2-bal hidden"></span><span>'+esc(a.rot)+'</span><small class="e2-advinfo">'+esc(e2AdvInfoTxt(a))+'</small></div>'}).join('');
+    E2_SALAS.map(function(s){return'<div class="e2-sala" style="left:'+((s.x+4)/E2_W*100)+'%;top:'+((s.cima?s.y+4:s.y+8)/E2_H*100)+'%">'+esc(s.nome)+'</div>'}).join('')+e2AdvsInit().map(function(a){return'<div class="e2-voce e2-advtag" id="e2-'+a.id+'" style="left:'+(a.x/E2_W*100)+'%;top:'+((a.y-25)/E2_H*100)+'%"><span class="e2-bal hidden"></span><span>'+esc(a.rot)+'</span></div>'}).join('');
   e2Equipe();e2LogDesenhar();E2.rodando=false;e2Garantir();
 }
 function e2Equipe(){
   var box=document.getElementById('e2-equipe');if(!box||!E2.func)return;
   var est={parado:'Na mesa',indo:'Indo ao setor',trabalhando:'Trabalhando…',entregando:'Levando o resultado',voltando:'Voltando',pausa:'Indo para a copa',saindo:'Indo embora'};
-  var advH=(E2.advs||[]).map(function(a){var d=e2AdvDados(a),st=a.fora?'Fora do expediente':a.estado==='lazer'&&a.spot?'Na copa: '+E2_ATV[a.spot.act]:a.estado==='mesa'?'Na mesa':a.estado==='pausa'?'Indo para a copa':a.estado==='saindo'?'Indo embora':'Voltando';
-    return'<div class="e2-card e2-card-adv"><div class="e2-card-h"><span class="e2-av" style="background:'+a.camisa+'">'+esc(a.rot.replace(/^Dra?\.\s*/,'')[0])+'</span><div><b>'+esc(a.rot)+'</b><small>Advogado(a)</small></div><span class="e2-st '+(a.fora?'fora':a.estado==='lazer'?'lazer':'parado')+'">'+st+'</span></div><div class="e2-adv-dados"><span><b>'+d.proc+'</b> processos ativos</span><span><b>'+d.pz+'</b> prazos na semana</span><span><b>'+e2Hn(d.hHoje)+'</b> hoje</span><span><b>'+e2Hn(d.hSem)+'</b> na semana · <b>'+e2Hn(d.hMes)+'</b> no mês</span></div></div>'}).join('');
+  var advH=(E2.advs||[]).map(function(a){var d=E2.advAberto&&E2.advAberto[a.id]?e2AdvDados(a):null,st=a.fora?'Fora do expediente':a.estado==='lazer'&&a.spot?'Na copa: '+E2_ATV[a.spot.act]:a.estado==='mesa'?'Na mesa':a.estado==='pausa'?'Indo para a copa':a.estado==='saindo'?'Indo embora':'Voltando';
+    var ab=E2.advAberto&&E2.advAberto[a.id];
+    return'<div class="e2-card e2-card-adv" style="cursor:pointer" onclick="E2.advAberto=E2.advAberto||{};E2.advAberto[\''+a.id+'\']=!E2.advAberto[\''+a.id+'\'];e2Equipe()" title="Clique para ver processos e horas"><div class="e2-card-h"><span class="e2-av" style="background:'+a.camisa+'">'+esc(a.rot.replace(/^Dra?\.\s*/,'')[0])+'</span><div><b>'+esc(a.rot)+'</b><small>Advogado(a)</small></div><span class="e2-st '+(a.fora?'fora':a.estado==='lazer'?'lazer':'parado')+'">'+st+'</span></div>'+(ab?'<div class="e2-adv-dados"><span><b>'+d.proc+'</b> processos ativos</span><span><b>'+d.pz+'</b> prazos na semana</span><span><b>'+e2Hn(d.hHoje)+'</b> hoje</span><span><b>'+e2Hn(d.hSem)+'</b> na semana · <b>'+e2Hn(d.hMes)+'</b> no mês</span></div>':'<div style="font-size:11px;color:var(--text3);padding:2px 0 4px"><i class="ti ti-hand-click"></i> Clique para ver processos e horas</div>')+'</div>'}).join('');
   var html=advH+E2.func.map(function(f){var ts=E2_TAREFAS.filter(function(t){return t.func===f.id&&!t.oculta});
     return'<div class="e2-card"><div class="e2-card-h"><span class="e2-av" style="background:'+f.camisa+'">'+esc(f.nome[0])+'</span><div><b>'+esc(f.nome)+'</b><small>'+esc(f.cargo)+'</small></div><span class="e2-st '+(f.fora?'fora':f.estado)+'">'+(f.tarefa?esc(f.tarefa.nome):f.fora?'Fora do expediente':f.estado==='lazer'&&f.spot?'Na copa: '+E2_ATV[f.spot.act]:est[f.estado]||'')+(f.progTxt&&f.estado==='trabalhando'?' '+esc(f.progTxt):'')+(f.fila.length?' · +'+f.fila.length:'')+'</span></div>'+
       '<div class="e2-card-b">'+ts.map(function(t){return'<button onclick="e2Pedir(\''+t.id+'\')">'+esc(t.nome)+'</button>'}).join('')+'</div></div>'}).join('');
@@ -7735,10 +7767,10 @@ function e2Boneco(c,f,trab){
   e2Ret(c,x+(d>0?0:-2),y-15,1,1,'#111827');e2Ret(c,x+(d>0?2:0),y-15,1,1,'#111827');
 }
 function e2Overlay(){
-  (E2.pets||[]).forEach(function(pt){var tag=document.getElementById('e2-pet-'+pt.id);if(!tag)return;tag.style.left=(pt.x/E2_W*100)+'%';tag.style.top=((pt.y-12)/E2_H*100)+'%';var b=tag.querySelector('.e2-bal'),txt=pt.balao&&pt.balao.ate>E2.t?pt.balao.txt:(pt.estado==='dormindo'?'zzz':'');if(b.textContent!==txt)b.textContent=txt;b.classList.toggle('hidden',!txt)});
+  (E2.pets||[]).forEach(function(pt){var tag=document.getElementById('e2-pet-'+pt.id);if(!tag)return;tag.style.left=(pt.x/E2_W*100)+'%';tag.style.top=((pt.y-12)/E2_H*100)+'%';var b=tag.querySelector('.e2-bal'),txt='';if(b.textContent!==txt)b.textContent=txt;b.classList.toggle('hidden',!txt)});
   (E2.advs||[]).forEach(function(a){var tag=document.getElementById('e2-'+a.id);if(!tag)return;tag.style.display=a.fora?'none':'';var naMesa=a.estado==='mesa'&&!a.caminho.length;tag.style.left=(a.x/E2_W*100)+'%';tag.style.top=((a.y-(naMesa?25:20))/E2_H*100)+'%';tag.style.transform=a.x>500?'translate(-80%,0)':'translate(-50%,0)';tag.classList.toggle('e2-advtag-anda',!naMesa);
     var b=tag.querySelector('.e2-bal'),txt=a.balao&&a.balao.ate>E2.t?a.balao.txt:'';if(b.textContent!==txt)b.textContent=txt;b.classList.toggle('hidden',!txt);
-    if(!a._infoEm||E2.t-a._infoEm>5){a._infoEm=E2.t;var inf=tag.querySelector('.e2-advinfo'),t2=e2AdvInfoTxt(a);if(inf.textContent!==t2)inf.textContent=t2}});
+});
   E2.func.forEach(function(f){
     var tag=document.getElementById('e2-tag-'+f.id);if(!tag)return;tag.style.display=f.fora?'none':'';
     tag.style.left=(f.x/E2_W*100)+'%';tag.style.top=((f.y-20)/E2_H*100)+'%';
